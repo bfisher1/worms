@@ -51,9 +51,10 @@ Anim **loadAnims(SDL_Surface *screen, int *len) {
     *len = ANIMS_NUM;
     Color blue = {0, 0, 255};
     Anim **anims = (Anim **) malloc(sizeof(Anim *) * *len);
-    anims[wormMove] = loadAnim("anims/worm move.ppm", 10, 40, 40, 10, screen, &blue);
-    anims[wormYawn] = loadAnim("anims/worm yawn.ppm", 10, 40, 40, 1, screen, &blue);
+    anims[wormMove] = loadAnim("anims/worm move.ppm", 10, 40, 40, 18, screen, &blue);
+    anims[wormYawn] = loadAnim("anims/worm yawn.ppm", 10, 40, 40, 5, screen, &blue);
     anims[wormStill] = loadAnim("anims/worm still.ppm", 1, 40, 40, 1, screen, &blue);
+    //dynamite 25 fps
     for(int i = 0; i < *len; i++){
         //if one of the anims wasn't read properly, then return NULL
         if(!anims[i]) {
@@ -75,16 +76,17 @@ void freeAnims(Anim **anims, int len) {
     free(anims);
 }
 
-bool playAnim(Anim *anim, int x, int y, float angle) {
-    if( (float) (clock() - anim->lastPlayed) / CLOCKS_PER_SEC >= (1.0 / anim->fps) ){
-        drawSubImage(anim->spriteSheet, anim->screen,
-        x, y, 0, anim->currentFrame * anim->height,
-        anim->width, anim->height, &anim->background,
-        anim->flippedHoriz, angle);
+bool playAnim(Anim *anim, int x, int y, float angle, int *frame) {
+    drawSubImage(anim->spriteSheet, anim->screen,
+    x, y, 0, *frame * anim->height,
+    anim->width, anim->height, &anim->background,
+    anim->flippedHoriz, angle);
 
-        anim->currentFrame++;
-        if(anim->currentFrame >= anim->frames) {
-            anim->currentFrame = 0;
+    if( (float) (clock() - anim->lastPlayed) / CLOCKS_PER_SEC >= (1.0 / anim->fps) ){
+        anim->lastPlayed = clock();
+       *frame += 1;
+        if(*frame >= anim->frames) {
+            *frame = 0;
             return true;
         }
     }

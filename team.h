@@ -28,6 +28,7 @@ typedef struct {
     Creates a team with the given name, number of members, and color.
 
     @param name the name of the team
+    @param names the names of the team members
     @param teamNumber the number of members on the team
     @param color the team's color
     @param weapons the array of weapons in the team's inventory
@@ -38,7 +39,7 @@ typedef struct {
 
     @return the team that was created
 */
-Team *createTeam(char *name, int teamNumber, Color color, Weapon *weapons, int *weaponNums, int weaponNumber, Level *level);
+Team *createTeam(char *name, char **names, int teamNumber, Color color, Weapon *weapons, int *weaponNums, int weaponNumber, Level *level);
 
 /**
     Calculates the team's overall health.

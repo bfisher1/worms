@@ -225,7 +225,7 @@ void drawSubImage(Image *img, SDL_Surface *screen, int centerx, int centery, int
             if(flippedHoriz){
                 x = rx + rwidth - x - 1;
             }
-            if(0 <= x && x < img->width && 0 <= y && y < img->height && 0 <= screenx && screenx < screen->w && 0 <= screeny && screeny < screen->h && !sameColors(&img->grid[y][x], background)) {
+            if(0 <= x && x < img->width && 0 <= y && y < img->height && 0 <= screenx && screenx < screen->w && 0 <= screeny && screeny < screen->h && (background == NULL || !sameColors(&img->grid[y][x], background)) ) {
                     setpixel(screen, screenx, ytimesw, img->grid[y][x]);
             }
         }

@@ -1,7 +1,10 @@
 #include "worm.h"
 #include "util.h"
+#include "level.h"
 #define WORM_WIDTH 20
 #define WORM_HEIGHT 20
+#define HEALTH_BAR_THICKNESS 4
+#define HEALTH_BAR_SCALE .25
 
 Worm *createWorm(char *name, float x, float y, int health, Color *teamColor, Anim *anim) {
     Worm *worm = (Worm *) malloc(sizeof(Worm));
@@ -16,7 +19,16 @@ Worm *createWorm(char *name, float x, float y, int health, Color *teamColor, Ani
     worm->teamColor = teamColor;
     worm->facingRight = randInt(0,2);
     worm->currentAnim = anim;
+    worm->currentFrame = 0;
     return worm;
+}
+
+void drawWormHealthBar(Worm *worm, int thickness) {
+    Color green = {0, 255, 0};
+    Color red = {255, 0, 0};
+    drawRect(worm->currentAnim->screen, worm->obj->x - (MAX_HEALTH / 2) * HEALTH_BAR_SCALE, worm->obj->y - worm->currentAnim->height, worm->health * HEALTH_BAR_SCALE, thickness, green);
+    drawRect(worm->currentAnim->screen, worm->obj->x - (MAX_HEALTH / 2) * HEALTH_BAR_SCALE + worm->health * HEALTH_BAR_SCALE, worm->obj->y - worm->currentAnim->height, (MAX_HEALTH - worm->health) * HEALTH_BAR_SCALE, thickness, red);
+    
 }
 
 void drawWorm(Worm *worm) {
@@ -24,11 +36,15 @@ void drawWorm(Worm *worm) {
     float x = worm->obj->x;
     float y = worm->obj->y;
     float rot = worm->obj->rotation;
-    playAnim(currentAnim, x, y, rot);
+    playAnim(currentAnim, x, y, rot, &worm->currentFrame);
+    drawWormHealthBar(worm, HEALTH_BAR_THICKNESS);
 }
 
 void switchAnim(Worm *worm, Anim *anim) {
-    worm->currentAnim = anim;
+    if(worm->currentAnim != anim) {
+        worm->currentFrame = 0;
+        worm->currentAnim = anim;
+    }
 }
 
 void flipWormRight(Worm *worm) {
@@ -52,4 +68,12 @@ void healWorm(Worm *worm, int healingFactor) {
 void freeWorm(Worm *worm) {
     freePhysObj(worm->obj);
     free(worm);
+}
+
+void clearWorm(Worm *worm, Level *level) {
+    drawLevel(level, (worm->obj->x - worm->currentAnim->width) / 8,
+     (worm->obj->y - worm->currentAnim->height) / 8,
+    (worm->obj->x + worm->currentAnim->width) ,
+    (worm->obj->y + worm->currentAnim->height) );
+    
 }

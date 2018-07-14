@@ -6,14 +6,14 @@
     it. A worm contains a physical object to control its movement and
     physics. It also has health, current animation, a name, and a
     team color. Facing right corresponds to the direction the worm
-    is facing.
+    is facing. Contains the current anim's frame.
 */
 #ifndef WORM_H
 #define WORM_H
 #include "physObj.h"
 #include "anim.h"
 #include "graphics.h"
-
+#define MAX_HEALTH 100
 /**
     Structure for a worm.
 */
@@ -24,6 +24,7 @@ typedef struct {
     Color *teamColor;
     char *name;
     bool facingRight;
+    int currentFrame;
 } Worm;
 
 /**
@@ -91,5 +92,7 @@ void healWorm(Worm *worm, int healingFactor);
     @param worm the worm being freed
 */
 void freeWorm(Worm *worm);
+
+void clearWorm(Worm *worm, Level *level);
 
 #endif /* WORM_H */

@@ -71,9 +71,10 @@ void freeAnims(Anim **anims, int len);
     @param x the x coordinate where the anim's center is on its screen
     @param y the y coordinate where the anim's center is on its screen
     @param angle the angle the animation is played at
+    @param frame the frame of the animation being played
 
     @return true if the animation has finished, false if not
 */
-bool playAnim(Anim *anim, int x, int y, float angle);
+bool playAnim(Anim *anim, int x, int y, float angle, int *frame);
 
 #endif /* ANIM_H */

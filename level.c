@@ -53,8 +53,8 @@ void drawLevel(Level *level, int x, int y, int xmax, int ymax) {
     int ytimesw;
     //Color red = {255, 0, 0};
     //Color black = {0, 0, 0};
-    for(int i = y; i < ymax / 8; i++) {
-        for(int j = x; j < xmax / 8; j++) {
+    for(int i = (y > 0 ? y : 0); i < ymax / 8; i++) {
+        for(int j = (x > 0 ? x : 0); j < xmax / 8; j++) {
             for(int h = 0; h < 8; h++) {
                 ytimesw = (i * 8 + h)*level->screen->pitch/BPP;
                 for(int w = 0; w < 8; w++) {
@@ -84,11 +84,11 @@ void cutCircleInLevel(Level *level, int x, int y, int radius) {
     }
     xmax = x + radius;
     ymax = y + radius;
-    if(x > level->width){
-        xstart = level->width;
+    if(xmax > level->width){
+        xmax = level->width;
     }
-    if(y > level->height){
-        ystart = level->height;
+    if(ymax > level->height){
+        ymax = level->height;
     }
     for(int i = ystart; i < ymax; i++) {
         for(int j = xstart; j < xmax; j++) {
@@ -99,6 +99,7 @@ void cutCircleInLevel(Level *level, int x, int y, int radius) {
             }
         }
     }
+    drawLevel(level, xstart / 8, ystart / 8, xmax, ymax);
 }
 
 void freeLevel(Level *level) {
@@ -119,3 +120,4 @@ bool groundAt(Level *level, int x, int y) {
     }
     return false;
 }
+

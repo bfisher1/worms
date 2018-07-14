@@ -254,7 +254,7 @@ void move(PhysObj *obj, Level *level, float bounce) {
             obj->direction = atan2(vy, abs(vx));
             bool moved = false;
             while(leftCol) {
-                printf("MOVING RIGHT>>> x %d y %d \n", (int) obj->x, (int) obj->y);
+                //printf("MOVING RIGHT>>> x %d y %d \n", (int) obj->x, (int) obj->y);
                 obj->x += 1;
                 isColliding(obj, level, &leftCol, &rightCol, &topCol, &bottomCol);
                 moved = true;

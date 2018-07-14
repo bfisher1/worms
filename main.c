@@ -15,6 +15,8 @@
 #include "anim.h"
 #include "worm.h"
 #include <math.h>
+#include "weapon.h"
+#include "team.h"
 
 #define WIDTH 1000
 #define HEIGHT 800
@@ -40,6 +42,8 @@ int main(int argc, char *argv[])
     SDL_Surface *screen;
     SDL_Event event;
     Color green = {0, 255, 0};
+    Color blue = {0, 0, 255};
+
 	if (SDL_Init(SDL_INIT_VIDEO) < 0 ) return 1;
    
     if (!(screen = SDL_SetVideoMode(WIDTH, HEIGHT, DEPTH, SDL_RESIZABLE|SDL_HWSURFACE)))
@@ -56,14 +60,38 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Couldn't load animation\n");
         return EXIT_FAILURE;
     }
+    
+    Level *level = loadLevel("levels/level1_foreground.ppm", "levels/level1_background.ppm", "levels/level3.ppm", screen);
+    Worm *worm; // = createWorm("Springy", 202, 111, 100, &green, animBank[wormMove]);
+    
+    char *teamOneNames[] = {"Firefox", "BST", "Hidden Markov Model", "Blender", "PuTTY", "Huffman", "Seg fault"};
+    Weapon teamOneWeapons[] = {{grenade}, {mine}, {dynamite}};
+    int weaponNumsOne[] = {1, 0, 3};
+    Team *teamOne = createTeam("Annihilators", teamOneNames, 7, green, teamOneWeapons, weaponNumsOne, 3, level);
 
-    Worm *worm = createWorm("Springy", 202, 111, 100, &green, animBank[wormMove]);
+    char *teamTwoNames[] = {"FSM", "C++", "Python", "IllegalArgumentException", "HTML", "Hash table", "Assembly"};
+    Weapon teamTwoWeapons[] = {{parachute}, {dynamite}, {pistol}};
+    int weaponNumsTwo[] = {2, 8, 1};
+    Team *teamTwo = createTeam("OverClockers", teamTwoNames, 7, blue, teamTwoWeapons, weaponNumsTwo, 3, level);
+
+    Team *teams[] = {teamOne, teamTwo};
+    int teamNumber = 2;
+    for(int i = 0; i < teamNumber; i++) {
+        for(int j = 0; j < teams[i]->teamNumber; j++) {
+            switchAnim(teams[i]->worms[j], animBank[wormStill]);
+        }
+    }
+    
+    Worm *selectedWorm = teams[0]->worms[0];
+
+    Image *redBackground = loadPPM("levels/red_background.ppm");
+    
 
     time_t t;
     srand((unsigned) time(&t));
 
     //Image *life = loadPPM("levels/level1.ppm");
-    Level *level = loadLevel("levels/level1_foreground.ppm", "levels/level1_background.ppm", "levels/level3.ppm", screen);
+    
     //Level *level = loadLevel("levels/tiny_foreground.ppm", "levels/tiny_background.ppm", "levels/tiny level.ppm", screen);
 
     //Color black = {0, 0, 0};
@@ -76,9 +104,11 @@ int main(int argc, char *argv[])
     bool right = false;
     bool up = false;
     int c = 0;
-    float dir;
+    //float dir;
     bool explode = false;
+    drawLevel(level, 0, 0, WIDTH, HEIGHT);
     clock_t lastUpdate = clock();
+    bool le, ri, to, bo;
 	while(!gameOver) {
         c++;
         while(SDL_PollEvent(&event)) 
@@ -141,86 +171,81 @@ int main(int argc, char *argv[])
             c = 0;
         }
         if( ( (float) (clock() - lastUpdate)) / CLOCKS_PER_SEC >= REFRESH_RATE ) {
-            //worm->obj->rotation += .01;
-            bool le, ri, to, bo;
-            printf(" el %f\n", worm->obj->velocity);
-            isColliding(worm->obj, level, &le, &ri, &to, &bo);
-            if(!bo) {
-                accel(worm->obj, PI/2.0, GRAVITY, TERMINAL_FALL_VELOCITY);
-            }
-            printf("vvl %f\n", worm->obj->velocity);
-            
-            if(cut){
-                cutCircleInLevel(level, mousex, mousey, 50);
-                cut = false;
-            }
-            if(explode) {
-                cutCircleInLevel(level, worm->obj->x, worm->obj->y, 50);
-                dir = PI + atan2(mousey - worm->obj->y, mousex - worm->obj->x);
-                accel(worm->obj,  dir, 20, 150);
-                explode = false;
-            }
-
+            isColliding(selectedWorm->obj, level, &le, &ri, &to, &bo);
             if(right) {
-                switchAnim(worm, animBank[wormMove]);
+                switchAnim(selectedWorm, animBank[wormMove]);
                 if(to){
-                    accel(worm->obj, worm->obj->rotation, 2, 15);
+                    accel(selectedWorm->obj, selectedWorm->obj->rotation, .8, .8);
                 } else {
-                    worm->obj->x += 2;
+                    selectedWorm->obj->x += .4;
                 }
                 //printf("%f\n", worm->obj->rotation);
                 
                 //moveRight(worm->obj,level, 3);
-                flipWormRight(worm);
+                flipWormRight(selectedWorm);
             }
             if(left) {
-                switchAnim(worm, animBank[wormMove]);
+                switchAnim(selectedWorm, animBank[wormMove]);
                 //accel(worm->obj, PI, X_ACCEL, MAX_X_VELOCITY);
                 if(to) {
-                    accel(worm->obj, worm->obj->rotation + PI, 2, 15);
+                    accel(selectedWorm->obj, selectedWorm->obj->rotation + PI, .8, .8);
                 } else {
-                    worm->obj->x -= 2;
+                    selectedWorm->obj->x -= .4;
                 }
                 
                 //moveLeft(worm->obj,level, 3);
-                flipWormLeft(worm);
+                flipWormLeft(selectedWorm);
             }
             if(up && to) {
                 //jump(worm->obj, level, 7);
-                printf("JUMPING\n");
-                accel(worm->obj, -PI/2.0, JUMP, MAX_JUMP_VELOCITY);
+                //printf("JUMPING\n");
+                accel(selectedWorm->obj,  -PI/2.0, JUMP, MAX_JUMP_VELOCITY);
             }
             if(!right && !left) {
-                decel(worm->obj, X_ACCEL);
-                switchAnim(worm, animBank[wormStill]);
-                if(worm->facingRight) {
-                    flipWormRight(worm);
+                decel(selectedWorm->obj, X_ACCEL);
+                switchAnim(selectedWorm, animBank[wormStill]);
+                if(selectedWorm->facingRight) {
+                    flipWormRight(selectedWorm);
                 } else {
-                    flipWormLeft(worm);
+                    flipWormLeft(selectedWorm);
                 }
             }
-            //moveVert(worm->obj, level);
-            //drawRect(screen, 0, 0, WIDTH, HEIGHT, black);
-            //moveDown(worm->obj, level, 10);
-            //fall(worm->obj, GRAVITY, TERMINAL_FALL_VELOCITY);
-            
-        printf("%d %d %d %d\n", le, ri, to, bo);
-            //printf("%f %f \n", worm->obj->direction, worm->obj->velocity);
-            // printf("yyyy %f \n", worm->obj->y);
-            
-            //printf("-----\n");
-            //printf("YYY %f\n", worm->obj->y);
-            if(worm->obj->frame == NULL) {
-                printf("~~~~~~~~~~~\n");
+
+            for(int i = 0; i < teamNumber; i++) {
+                for(int j = 0; j < teamOne->teamNumber; j++) {
+                    worm = teams[i]->worms[j];
+                    isColliding(worm->obj, level, &le, &ri, &to, &bo);
+                    if(!bo) {
+                        accel(worm->obj, PI/2.0, GRAVITY, TERMINAL_FALL_VELOCITY);
+                    }
+                    
+                    //printf("vvl %f\n", worm->obj->velocity);
+                    
+                    if(cut){
+                        cutCircleInLevel(level, mousex, mousey, 50);
+                        cut = false;
+                    }
+                    if(explode) {
+                        //cutCircleInLevel(level, worm->obj->x, worm->obj->y, 50);
+                        //float dir = PI + atan2(mousey - worm->obj->y, mousex - worm->obj->x);
+                        //float dir = -PI / 2;
+                        //accel(worm->obj,  dir, 20, 150);
+                        hurtWorm(worm, randInt(12, 30));
+                        
+                    }
+
+                    
+                    move(worm->obj, level, 0);
+                    tilt(worm->obj, level, 2 * PI/180.0, screen);
+                    //drawLevel(level, 0, 0, WIDTH, HEIGHT);
+                    
+                }
             }
-            //printf("wdith %d\n", worm->obj->frame->width);
-            //printf("vel %f\n", worm->obj->velocity);
             
-            move(worm->obj, level, 0);
-            tilt(worm->obj, level, PI/180.0, screen);
-            drawLevel(level, 0, 0, WIDTH, HEIGHT);
-            //printf("orient %f\n", worm->obj->rotation);
-            //printf("++++++\n");
+            explode = false;
+            //printf("%d %d %d %d\n", le, ri, to, bo);
+            
+            
             /*
             Color red = {255, 0, 0};
             
@@ -234,17 +259,32 @@ int main(int argc, char *argv[])
             drawLine(screen, x, y, x + rad * cos(dir - PI / 2.0), y + rad * sin(dir - PI / 2.0), green);
             drawRect(screen, worm->obj->x + worm->obj->frame->x - worm->obj->frame->width / 2.0, worm->obj->y + worm->obj->frame->y - worm->obj->frame->height / 2.0, worm->obj->frame->width, worm->obj->frame->height, red);
             */
-            drawWorm(worm);
-
+            //drawWorm(worm);
+            
+            for(int i = 0; i < teamNumber; i++) {
+                for(int j = 0; j < teams[i]->teamNumber; j++) {
+                    drawWorm(teams[i]->worms[j]);
+                }
+            }
+            
+            //drawWorm(teams[0]->worms[0]);
             
             updateScreen(screen);
             lastUpdate = clock();
+            for(int i = 0; i < teamNumber; i++) {
+                for(int j = 0; j < teams[i]->teamNumber; j++) {
+                    clearWorm(teams[i]->worms[j], level);
+                }
+            }
+            
         }
 	}
-
+    freeImage(redBackground);
     freeLevel(level);
     freeAnims(animBank, animBankLen);
-    freeWorm(worm);
+    //freeWorm(worm);
+    freeTeam(teamOne);
+    freeTeam(teamTwo);
     SDL_Quit();
     
 	return 0;
