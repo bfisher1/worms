@@ -84,9 +84,62 @@ void updateScreen(SDL_Surface* screen);
 */
 void drawCircle(SDL_Surface* screen, int x0, int y0, int r, Color color);
 
+/**
+    Loads a ppm file into an image.
+
+    @param filename the name of the ppm file being read from
+    
+    @return the image in the file
+*/
 Image *loadPPM(char *fileName);
+
+/**
+    Draws an image to the given screen, offset by x and y.
+
+    @param img the image being drawn
+    @param screen the screen the image is being drawn on
+    @param x the amount of horizontal offset the image is rendered at
+    @param y the amount of vertical offset the image is rendered at
+*/
 void drawImage(Image *img, SDL_Surface *screen, int x, int y);
+
+/**
+    Frees an image from memory.
+
+    @param img the image being freed.
+*/
 void freeImage(Image *img);
 
+/**
+    Determines if 2 colors are the same.
+
+    @param col1 the first color
+    @param col2 the second color
+    
+    @return true if the colors are the same, false if they are not
+*/
 bool sameColors(Color *col1, Color *col2);
+
+/**
+    Draws a rectangular section of the image with the top left corner
+    at (x,y) on the screen. Bad things happen when angle passes 90.
+
+    @param img the image whose subsection is being drawn
+    @param screen the screen the subimage is being drawn on
+    @param x the x coordinate of the center of the drawn subimage
+    @param y the y coordinate of the center of the drawn subimage
+    @param rx the x coordinate of the left corner of the subimage
+           rectangle relative to the image
+    @param ry the y coordinate of the left corner of the subimage
+           rectangle relative to the image
+    @param rwidth the width of the subimage rectangle
+    @param rheight the height of the subimage rectangle
+    @param background the background color that gets skipped when drawn
+           NULL for the background will fill in the whole subimage
+    @param flippedHoriz whether or not the image is flipped horizontally
+    @param angle the angle the image is rotated at
+*/
+void drawSubImage(Image *img, SDL_Surface *screen, int centerx, int centery, int rx, int ry, int rwidth, int rheight, Color *background, bool flippedHoriz, float angle);
+
+void plotpix(SDL_Surface *screen, int x, int y, Color color );
 #endif /* GRAPHICS_H */

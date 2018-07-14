@@ -43,6 +43,12 @@ Level *loadLevel(char *foregroundName, char *backgroundName, char *terrainName, 
     return level;
 }
 void drawLevel(Level *level, int x, int y, int xmax, int ymax) {
+    if(xmax > level->width) {
+        xmax = level->width;
+    }
+    if(ymax > level->height) {
+        ymax = level->height;
+    }
     unsigned char mask;
     int ytimesw;
     //Color red = {255, 0, 0};
@@ -101,8 +107,15 @@ void freeLevel(Level *level) {
     for(int i = 0; i < level->height / 8; i++) {
         free(level->terrain[i]);
     }
+    free(level->terrain);
+    free(level);
 }
 
 bool groundAt(Level *level, int x, int y) {
-    return level->terrain[y/8][x/8].blocks[y%8] & (0x80 >> (x%8));
+    if(0 <= x && x < level->width) {
+        if(0 <= y && y < level->height) {
+            return level->terrain[y/8][x/8].blocks[y%8] & (0x80 >> (x%8));
+        }
+    }
+    return false;
 }

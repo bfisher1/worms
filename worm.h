@@ -5,7 +5,8 @@
     Definition file for the worm structure and functions related to
     it. A worm contains a physical object to control its movement and
     physics. It also has health, current animation, a name, and a
-    team color.
+    team color. Facing right corresponds to the direction the worm
+    is facing.
 */
 #ifndef WORM_H
 #define WORM_H
@@ -20,8 +21,9 @@ typedef struct {
     PhysObj *obj;
     int health;
     Anim *currentAnim;
-    Color *team;
+    Color *teamColor;
     char *name;
+    bool facingRight;
 } Worm;
 
 /**
@@ -32,10 +34,11 @@ typedef struct {
     @param y the worm's starting y coordinate
     @param health the worm's starting health
     @param color the worm's team color
+    @param anim the worm's starting anim
 
     @return the created worm
 */
-Worm *createWorm(char *name, float x, float y, int health, Color *teamColor);
+Worm *createWorm(char *name, float x, float y, int health, Color *teamColor, Anim *anim);
 
 /**
     Draws the worm according to its current animation.
@@ -53,11 +56,18 @@ void drawWorm(Worm *worm);
 void switchAnim(Worm *worm, Anim *anim);
 
 /**
-    Flips the direction of the worm.
+    Flips the direction of the worm left.
 
     @param worm the worm turning direction
 */
-void flipWorm(Worm *worm);
+void flipWormLeft(Worm *worm);
+
+/**
+    Flips the direction of the worm right.
+
+    @param worm the worm turning direction
+*/
+void flipWormRight(Worm *worm);
 
 /**
     Lowers the worm's health by the given damage.

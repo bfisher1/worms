@@ -27,9 +27,12 @@ typedef struct {
 typedef struct {
     float x;
     float y;
-    Box frame;
+    Box *frame;
     float velocity;
     float direction;
+    float rotation;
+    float yvelocity;
+    
 } PhysObj;
 
 /**
@@ -42,7 +45,7 @@ typedef struct {
     @param velocity the object's start velocity
     @param direction the object's start direction
 */
-PhysObj *createPhysObj(float x, float y, Box frame, float velocity, float direction);
+PhysObj *createPhysObj(float x, float y, Box *frame, float velocity, float direction);
 
 /**
     Causes the object to fall at the given rate. Stops falling if its
@@ -76,6 +79,7 @@ void decel(PhysObj *obj, float rate);
     Moves the object in the given level. If it hits the wall or
     ground, it is pushed back out in the opposite angle that it
     entered. The amount it bounces back is determined by bounce.
+    Bounce should be between 0 and 1.
 
     @param obj the object that is moving
     @param level the level the object is moving in
@@ -90,5 +94,27 @@ void move(PhysObj *obj, Level *level, float bounce);
     @param obj the object being freed
 */
 void freePhysObj(PhysObj *obj);
+
+void moveLeft(PhysObj *obj, Level *level, float amount);
+
+void moveRight(PhysObj *obj, Level *level, float amount);
+
+bool onGround(PhysObj *obj, Level *level);
+
+bool wallLeft(PhysObj *obj, Level *level);
+
+bool wallRight(PhysObj *obj, Level *level);
+
+bool wallAbove(PhysObj *obj, Level *level);
+
+void moveDown(PhysObj *obj, Level *level, float amount);
+
+void moveVert(PhysObj *obj, Level *level);
+
+void jump(PhysObj *obj, Level *level, float amount);
+
+bool isColliding(PhysObj *obj, Level *level, bool *leftCol, bool *rightCol, bool *topCol, bool *bottomCol);
+
+void tilt(PhysObj *obj, Level *level, float amount, SDL_Surface *screen);
 
 #endif /* PHYS_OBJ_H */

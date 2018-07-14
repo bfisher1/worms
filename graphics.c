@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "level.h"
+#include <math.h>
+#include "util.h"
 
 void setpixel(SDL_Surface *screen, int x, int y, Color color ) {
     int yInv = y * BPP / screen->pitch;
@@ -19,6 +21,21 @@ void setpixel(SDL_Surface *screen, int x, int y, Color color ) {
         colour = SDL_MapRGB( screen->format, color.r, color.g, color.b );
         
         pixmem32 = (Uint32*) screen->pixels  + y + x;
+        *pixmem32 = colour;
+    }
+}
+
+
+void plotpix(SDL_Surface *screen, int x, int y, Color color ) {
+    int ytimesw = (y) * screen->pitch/BPP;
+    int yInv = y * BPP / screen->pitch;
+    if(0 <= x && x < screen->w && 0 <= yInv && yInv < screen->h){
+        Uint32 *pixmem32;
+        Uint32 colour;  
+    
+        colour = SDL_MapRGB( screen->format, color.r, color.g, color.b );
+        
+        pixmem32 = (Uint32*) screen->pixels  + ytimesw + x;
         *pixmem32 = colour;
     }
 }
@@ -144,11 +161,10 @@ Image *loadPPM(char *fileName) {
             img->grid[i][j].b = b;
         }
     }
-    //first line
-    //if 
     fclose(f);
     return img;
 }
+
 void drawImage(Image *img, SDL_Surface *screen, int x, int y) {
     for(int i = 0; i < img->width; i++) {
         if( !(0 <= y && y < screen->h) ) {
@@ -165,6 +181,7 @@ void drawImage(Image *img, SDL_Surface *screen, int x, int y) {
         
     }
 }
+
 void freeImage(Image *img) {
     for(int i = 0; i < img->height; i++) {
         free(img->grid[i]);
@@ -175,4 +192,42 @@ void freeImage(Image *img) {
 
 bool sameColors(Color *col1, Color *col2) {
     return col1->r == col2->r && col1->g == col2->g && col1->b == col2->b;
+}
+
+void drawSubImage(Image *img, SDL_Surface *screen, int centerx, int centery, int rx, int ry, int rwidth, int rheight, Color *background,  bool flippedHoriz, float angle) {
+    
+    //printf("Y: %d\n", y);
+    int rxmax, rymax;
+    //coordinates relative to the frame, centered in its middle
+    float framex, framey;
+    //coordinates for rotated frame
+    int rotx, roty;
+    rxmax = rx + rwidth;
+    rymax = ry + rheight;
+    //screen coordinates of the image drawn
+    int screenx, screeny;
+    
+    for(int x = rx; x < rxmax && x < screen->w; x++) {
+        for(int y = ry; y < rymax && y < screen->h; y++) {
+            framex = x - rx - rwidth / 2.0;
+            framey = y - ry - rwidth / 2.0;
+
+            rotx = framex - tan(angle / 2.0) * framey;
+            roty = framey;
+            roty = sin(angle) * rotx + roty;
+            rotx = rotx -tan(angle/2.0) * roty;
+
+            screenx = rotx + centerx;
+            screeny = roty + centery;
+            
+            int ytimesw = (screeny) * screen->pitch/BPP;
+            
+            if(flippedHoriz){
+                x = rx + rwidth - x - 1;
+            }
+            if(0 <= x && x < img->width && 0 <= y && y < img->height && 0 <= screenx && screenx < screen->w && 0 <= screeny && screeny < screen->h && !sameColors(&img->grid[y][x], background)) {
+                    setpixel(screen, screenx, ytimesw, img->grid[y][x]);
+            }
+        }
+    }
 }

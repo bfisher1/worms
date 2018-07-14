@@ -8,6 +8,7 @@
 #ifndef UTIL
 #define UTIL
 #include <stdbool.h>
+#define PI 3.141592653
 /**
     Generates a random integer between min and max.
 
