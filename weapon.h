@@ -6,7 +6,7 @@
 */
 #ifndef WEAPON_H
 #define WEAPON_H
-//#include "game.h"
+
 /**
     Enumeration for the names of weapons.
 */
@@ -22,9 +22,16 @@ typedef enum {
     Weapon struct. Contains a function
     for its effect in game.
 */
-typedef struct {
+typedef struct WeaponTag {
     WeaponName name;
-    //void (*effect)(Game *game);
+    void (*drawInHand)(struct WeaponTag *weapon);
+    void (*activateWeapon)(void *game, int x, int y, float velocity, float orientation);
 } Weapon;
+
+Weapon *createDynamiteWeapon();
+Weapon *createMineWeapon();
+Weapon *createPistolWeapon();
+
+void freeWeapon(Weapon *weapon);
 
 #endif /* WEAPON_H */

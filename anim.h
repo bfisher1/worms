@@ -8,7 +8,7 @@
 */
 #ifndef ANIM_H
 #define ANIM_H
-#define ANIMS_NUM 3
+#define ANIMS_NUM 5
 
 #include <SDL/SDL.h>
 #include "graphics.h"
@@ -18,7 +18,9 @@
 typedef enum {
     wormMove,
     wormYawn,
-    wormStill
+    wormStill,
+    explosion,
+    dynamiteAnim
 } AnimName;
 
 /**

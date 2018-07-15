@@ -14,7 +14,11 @@
 #include "item.h"
 #include "Queue/queue.h"
 #include "team.h"
+#include "anim.h"
 #include <stdbool.h>
+#include <SDL/SDL.h>
+#include "graphics.h"
+#include <time.h>
 
 /**
     Structure for a game. A game contains references to all
@@ -26,13 +30,18 @@ typedef struct {
     Level *level;
     Queue *teams;
     Queue *items;
+    Anim **animBank;
+    int animNumber;
     float gravity;
     bool teamCanSwitchMember;
     int turnLength;
+    SDL_Surface *screen;
+    clock_t lastUpdate;
+    Worm *player;
 } Game;
 
 /**
-    Creates a game with the given level, teams, turn length, and gravity.
+    Begins a game with the given level, teams, turn length, and gravity.
 
     @param level the game's level
     @param teams the teams in the game
@@ -41,7 +50,7 @@ typedef struct {
     
     @return the game made from these parameters
 */
-Game *createGame(Level *level, Team *teams, int turnLength, float gravity);
+Game *startGame(Level *level, Queue *teams, int turnLength, float gravity);
 
 /**
     Moves all physical objects in the game.
@@ -62,6 +71,7 @@ bool wormsHaveSettled(Game *game);
 
     @param game the game being freed.
 */
-void freeGame(Game *game);
+void endGame(Game *game);
 
+bool gameLoop(Game *game);
 #endif /* GAME_H */

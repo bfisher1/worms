@@ -17,6 +17,8 @@
 #include <math.h>
 #include "weapon.h"
 #include "team.h"
+#include "game.h"
+#include "Queue/queue.h"
 
 #define WIDTH 1000
 #define HEIGHT 800
@@ -28,6 +30,8 @@
 #define MAX_X_VELOCITY 5.0
 #define JUMP 8.0
 #define MAX_JUMP_VELOCITY 25
+#define TURN_LENGTH 60
+//add suddent death and water
 
 /**
     The program's starting point.
@@ -39,10 +43,10 @@
 */
 int main(int argc, char *argv[])
 { 
+    /*
     SDL_Surface *screen;
     SDL_Event event;
-    Color green = {0, 255, 0};
-    Color blue = {0, 0, 255};
+    
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0 ) return 1;
    
@@ -60,9 +64,11 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Couldn't load animation\n");
         return EXIT_FAILURE;
     }
-    
-    Level *level = loadLevel("levels/level1_foreground.ppm", "levels/level1_background.ppm", "levels/level3.ppm", screen);
-    Worm *worm; // = createWorm("Springy", 202, 111, 100, &green, animBank[wormMove]);
+    */
+    Color green = {0, 255, 0};
+    Color blue = {0, 0, 255};
+    Level *level = loadLevel("levels/level1_foreground.ppm", "levels/level1_background.ppm", "levels/level3.ppm", NULL);
+    //Worm *worm; // = createWorm("Springy", 202, 111, 100, &green, animBank[wormMove]);
     
     char *teamOneNames[] = {"Firefox", "BST", "Hidden Markov Model", "Blender", "PuTTY", "Huffman", "Seg fault"};
     Weapon teamOneWeapons[] = {{grenade}, {mine}, {dynamite}};
@@ -74,7 +80,12 @@ int main(int argc, char *argv[])
     int weaponNumsTwo[] = {2, 8, 1};
     Team *teamTwo = createTeam("OverClockers", teamTwoNames, 7, blue, teamTwoWeapons, weaponNumsTwo, 3, level);
 
-    Team *teams[] = {teamOne, teamTwo};
+    //Team *teams[]  = {teamOne, teamTwo};
+    Queue *teams = makeQueue();
+    enqueue(teams, teamOne);
+    enqueue(teams, teamTwo);
+    
+    /*
     int teamNumber = 2;
     for(int i = 0; i < teamNumber; i++) {
         for(int j = 0; j < teams[i]->teamNumber; j++) {
@@ -83,12 +94,17 @@ int main(int argc, char *argv[])
     }
     
     Worm *selectedWorm = teams[0]->worms[0];
-
-    Image *redBackground = loadPPM("levels/red_background.ppm");
+    */
+    //Image *redBackground = loadPPM("levels/red_background.ppm");
     
-
+    /*
     time_t t;
     srand((unsigned) time(&t));
+    */
+
+    Game *game = startGame(level, teams, TURN_LENGTH, GRAVITY);
+    level->screen = game->screen;
+    drawLevel(game->level, 0, 0, WIDTH, HEIGHT);
 
     //Image *life = loadPPM("levels/level1.ppm");
     
@@ -98,6 +114,7 @@ int main(int argc, char *argv[])
     
     
     bool gameOver = false;
+    /*
     int mousex, mousey;
     bool cut = false;
     bool left = false;
@@ -109,7 +126,10 @@ int main(int argc, char *argv[])
     drawLevel(level, 0, 0, WIDTH, HEIGHT);
     clock_t lastUpdate = clock();
     bool le, ri, to, bo;
+    */
 	while(!gameOver) {
+        gameOver = gameLoop(game);
+        /*
         c++;
         while(SDL_PollEvent(&event)) 
          {
@@ -244,7 +264,7 @@ int main(int argc, char *argv[])
             
             explode = false;
             //printf("%d %d %d %d\n", le, ri, to, bo);
-            
+            */
             
             /*
             Color red = {255, 0, 0};
@@ -260,25 +280,30 @@ int main(int argc, char *argv[])
             drawRect(screen, worm->obj->x + worm->obj->frame->x - worm->obj->frame->width / 2.0, worm->obj->y + worm->obj->frame->y - worm->obj->frame->height / 2.0, worm->obj->frame->width, worm->obj->frame->height, red);
             */
             //drawWorm(worm);
-            
+            /*
             for(int i = 0; i < teamNumber; i++) {
                 for(int j = 0; j < teams[i]->teamNumber; j++) {
                     drawWorm(teams[i]->worms[j]);
                 }
             }
-            
+            */
             //drawWorm(teams[0]->worms[0]);
             
-            updateScreen(screen);
-            lastUpdate = clock();
+            //updateScreen(screen);
+            //lastUpdate = clock();
+            /*
             for(int i = 0; i < teamNumber; i++) {
                 for(int j = 0; j < teams[i]->teamNumber; j++) {
                     clearWorm(teams[i]->worms[j], level);
                 }
             }
+            */
             
-        }
+        //}
+        
 	}
+    endGame(game);
+    /*
     freeImage(redBackground);
     freeLevel(level);
     freeAnims(animBank, animBankLen);
@@ -286,6 +311,7 @@ int main(int argc, char *argv[])
     freeTeam(teamOne);
     freeTeam(teamTwo);
     SDL_Quit();
+    */
     
 	return 0;
 }

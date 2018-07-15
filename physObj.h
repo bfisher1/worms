@@ -115,6 +115,6 @@ void jump(PhysObj *obj, Level *level, float amount);
 
 bool isColliding(PhysObj *obj, Level *level, bool *leftCol, bool *rightCol, bool *topCol, bool *bottomCol);
 
-void tilt(PhysObj *obj, Level *level, float amount, SDL_Surface *screen);
+void tilt(PhysObj *obj, Level *level, float amount, float max, SDL_Surface *screen);
 
 #endif /* PHYS_OBJ_H */

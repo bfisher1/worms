@@ -50,11 +50,15 @@ void freeAnim(Anim *anim) {
 Anim **loadAnims(SDL_Surface *screen, int *len) {
     *len = ANIMS_NUM;
     Color blue = {0, 0, 255};
+    Color red = {255, 0, 0};
     Anim **anims = (Anim **) malloc(sizeof(Anim *) * *len);
     anims[wormMove] = loadAnim("anims/worm move.ppm", 10, 40, 40, 18, screen, &blue);
     anims[wormYawn] = loadAnim("anims/worm yawn.ppm", 10, 40, 40, 5, screen, &blue);
     anims[wormStill] = loadAnim("anims/worm still.ppm", 1, 40, 40, 1, screen, &blue);
+    anims[dynamiteAnim] = loadAnim("anims/dynamite.ppm", 5, 40, 40, 25, screen, &blue);
+    anims[explosion] = loadAnim("anims/explosion2.ppm", 7, 76, 78, 20, screen, &red);
     //dynamite 25 fps
+    //explosion 20 fps
     for(int i = 0; i < *len; i++){
         //if one of the anims wasn't read properly, then return NULL
         if(!anims[i]) {

@@ -283,7 +283,7 @@ void move(PhysObj *obj, Level *level, float bounce) {
 }
 #include <SDL/SDL.h>
 #include "graphics.h"
-void tilt(PhysObj *obj, Level *level, float amount, SDL_Surface *screen) {
+void tilt(PhysObj *obj, Level *level, float amount, float max, SDL_Surface *screen) {
     //left and right corners, polar coordinates, and center coordinates
     float lcx, lcy, rcx, rcy, rad, dir, cx, cy;
     bool leftCorner, rightCorner;
@@ -319,12 +319,12 @@ void tilt(PhysObj *obj, Level *level, float amount, SDL_Surface *screen) {
     
 
     if(leftCorner) {
-        if(!rightCorner) {
+        if(!rightCorner && obj->rotation < max) {
             obj->rotation += amount;
             return;
         }
     } else if(rightCorner) {
-        if(!leftCorner) {
+        if(!leftCorner  && obj->rotation > -max) {
             obj->rotation -= amount;
             return;
         }
