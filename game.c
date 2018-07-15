@@ -44,9 +44,17 @@ Game *startGame(Level *level, Queue *teams, int turnLength, float gravity) {
     game->turnLength = turnLength;
     game->teamCanSwitchMember = false;
     if(!game->animBank) {
+        fprintf(stderr, "Couldn't load animation file(s).\n");
         exit(EXIT_FAILURE);
     }
     game->screen = screen;
+    Color white = {255, 255, 255};
+    Color black = {0, 0, 0};
+    game->font = loadFont("anims/font.ppm", game->screen, white, black, 1);
+    if(!game->font) {
+        fprintf(stderr, "Couldn't load font file.\n");
+        exit(EXIT_FAILURE);
+    }
     Team *team;
     for(int i = 0; i < queueSize(game->teams); i++) {
         team = dequeue(game->teams);
@@ -56,6 +64,7 @@ Game *startGame(Level *level, Queue *teams, int turnLength, float gravity) {
         }
     }
     game->player = team->worms[0];
+    game->currentTeam = team;
     game->lastUpdate = clock();
     return game;
 }
@@ -79,13 +88,14 @@ void endGame(Game *game) {
     }
     freeQueue(game->items);
     freeQueue(game->teams);
+    freeFont(game->font);
     free(game);
 }
 
 bool gameLoop(Game *game) {
     static SDL_Event event;
     static bool left, right, up, down, space, tab, esc, le, ri, to, bo;
-    static int mousex, mousey, teamNumber, wormNumber, itemNumber;
+    static int mousex, mousey, teamNumber, wormNumber, itemNumber, weaponFrame;
     static Worm *worm;
     static Team *team;
     readKeys(&event, &left, &right, &up, &down, &space, &tab, &esc);
@@ -136,6 +146,9 @@ bool gameLoop(Game *game) {
             }
         }
 
+        if(space) {
+            fireWeapon(game->currentTeam->weapons[game->currentTeam->selectedWeapon].name, (void *) game, game->player->obj->x, game->player->obj->y, 45 * PI / 180, 10);
+        }
 
         for(int i = 0; i < teamNumber; i++) {
             team = dequeue(game->teams);
@@ -144,10 +157,6 @@ bool gameLoop(Game *game) {
             for(int j = 0; j < wormNumber; j++) {
                 
                 worm = team->worms[j];
-                //do stuff with worms
-                //accel
-                //move
-                //draw
                 isColliding(worm->obj, game->level, &le, &ri, &to, &bo);
                 if(!bo) {
                     accel(worm->obj, PI/2.0, game->gravity, TERMINAL_FALL_VELOCITY);
@@ -160,7 +169,23 @@ bool gameLoop(Game *game) {
         itemNumber = queueSize(game->items);
         for(int i = 0; i < itemNumber; i++) {
             //do item stuff
+            void *subItem = dequeue(game->items);
+            enqueue(game->items, subItem);
+            Item *item = ((ItemSubclass *) subItem)->item;
+
+            isColliding(item->obj, game->level, &le, &ri, &to, &bo);
+            if(!bo) {
+                accel(item->obj, PI/2.0, game->gravity, TERMINAL_FALL_VELOCITY);
+            }
+            move(item->obj, game->level, 0);
+            drawItem(item);
         }
+        drawWeapon(game->currentTeam->weapons[game->currentTeam->selectedWeapon].name, game->player->obj->x, game->player->obj->y, &weaponFrame, (void *) game);
+        /*
+        if(down) {
+            writeText(game->font, "Goodbye world 123", 100, 100);
+        }
+        */
         updateScreen(game->screen);
         for(int i = 0; i < teamNumber; i++) {
             team = dequeue(game->teams);
@@ -170,6 +195,15 @@ bool gameLoop(Game *game) {
                 worm = team->worms[j];
                 clearWorm(worm, game->level);
             }
+        }
+
+        itemNumber = queueSize(game->items);
+        for(int i = 0; i < itemNumber; i++) {
+            //do item stuff
+            void *subItem = dequeue(game->items);
+            enqueue(game->items, subItem);
+            Item *item = ((ItemSubclass *) subItem)->item;
+            clearItem(item, game->level);
         }
         
     }

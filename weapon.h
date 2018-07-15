@@ -32,6 +32,10 @@ Weapon *createDynamiteWeapon();
 Weapon *createMineWeapon();
 Weapon *createPistolWeapon();
 
+void drawWeapon(WeaponName name, int x, int y, int *frame, void *game);
+
 void freeWeapon(Weapon *weapon);
+
+void fireWeapon(WeaponName name, void *game, int x, int y, float direction, float velocity);
 
 #endif /* WEAPON_H */

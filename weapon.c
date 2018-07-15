@@ -4,6 +4,8 @@
 #include "physObj.h"
 #include <time.h>
 #include "level.h"
+#include "Queue/queue.h"
+#include "item.h"
 #define DYNAMITE_WIDTH 5
 #define DYNAMITE_HEIGHT 20
 #define DYNAMITE_DELAY 3
@@ -84,3 +86,30 @@ Weapon *createPistolWeapon() {
 void freeWeapon(Weapon *weapon) {
     free(weapon);
 }
+
+void drawWeapon(WeaponName name, int x, int y, int *frame, void *game) {
+    Game *g = (Game *) game;
+    switch(name) {
+        case grenade:
+            break;
+        case mine:
+            break;
+        case dynamite:
+            if(playAnim(g->animBank[dynamiteAnim], x, y, 0, frame)) {
+                *frame = 0;
+            }
+            break;
+        case parachute:
+            break;
+        case pistol:
+            break;
+    }
+}
+
+void fireWeapon(WeaponName name, void *game, int x, int y, float direction, float velocity) {
+    cutCircleInLevel( ((Game *) game)->level, x, y, 20 );
+    cutCircleInLevel( ((Game *) game)->level, x+40, y, 40 );
+    //enqueue((Game *game)->items, );
+}
+
+//void continueWeapon

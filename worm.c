@@ -74,6 +74,5 @@ void clearWorm(Worm *worm, Level *level) {
     drawLevel(level, (worm->obj->x - worm->currentAnim->width) / 8,
      (worm->obj->y - worm->currentAnim->height) / 8,
     (worm->obj->x + worm->currentAnim->width) ,
-    (worm->obj->y + worm->currentAnim->height) );
-    
+    (worm->obj->y + worm->currentAnim->height) );  
 }

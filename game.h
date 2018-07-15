@@ -19,6 +19,7 @@
 #include <SDL/SDL.h>
 #include "graphics.h"
 #include <time.h>
+#include "text.h"
 
 /**
     Structure for a game. A game contains references to all
@@ -38,6 +39,8 @@ typedef struct {
     SDL_Surface *screen;
     clock_t lastUpdate;
     Worm *player;
+    Team *currentTeam;
+    Font *font;
 } Game;
 
 /**

@@ -71,12 +71,12 @@ int main(int argc, char *argv[])
     //Worm *worm; // = createWorm("Springy", 202, 111, 100, &green, animBank[wormMove]);
     
     char *teamOneNames[] = {"Firefox", "BST", "Hidden Markov Model", "Blender", "PuTTY", "Huffman", "Seg fault"};
-    Weapon teamOneWeapons[] = {{grenade}, {mine}, {dynamite}};
+    Weapon teamOneWeapons[] = {{dynamite}, {mine}, {grenade}};
     int weaponNumsOne[] = {1, 0, 3};
     Team *teamOne = createTeam("Annihilators", teamOneNames, 7, green, teamOneWeapons, weaponNumsOne, 3, level);
 
     char *teamTwoNames[] = {"FSM", "C++", "Python", "IllegalArgumentException", "HTML", "Hash table", "Assembly"};
-    Weapon teamTwoWeapons[] = {{parachute}, {dynamite}, {pistol}};
+    Weapon teamTwoWeapons[] = {{dynamite}, {parachute}, {pistol}};
     int weaponNumsTwo[] = {2, 8, 1};
     Team *teamTwo = createTeam("OverClockers", teamTwoNames, 7, blue, teamTwoWeapons, weaponNumsTwo, 3, level);
 
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     Game *game = startGame(level, teams, TURN_LENGTH, GRAVITY);
     level->screen = game->screen;
     drawLevel(game->level, 0, 0, WIDTH, HEIGHT);
-
+    enqueue(game->items, createHealthCrate(426, 376, 60, 100, (void *) game));
     //Image *life = loadPPM("levels/level1.ppm");
     
     //Level *level = loadLevel("levels/tiny_foreground.ppm", "levels/tiny_background.ppm", "levels/tiny level.ppm", screen);

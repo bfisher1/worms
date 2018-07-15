@@ -15,6 +15,7 @@ Team *createTeam(char *name, char **names, int teamNumber, Color color, Weapon *
     team->weapons = weapons;
     team->weaponNums = weaponNums;
     team->weaponNumber = weaponNumber;
+    team->selectedWeapon = 0;
     return team;
 }
 

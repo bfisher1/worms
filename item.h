@@ -10,17 +10,28 @@
 #include "worm.h"
 #include "level.h"
 #include "weapon.h"
+#include "anim.h"
+#include "level.h"
 
 /**
     An item has a physical object component, a current animation, and
     a function for if it collides with a worm in the level.
 */
-typedef struct {
+typedef struct ItemTag {
     PhysObj *obj;
     Anim *currentAnim;
-    void (*wormCollide)(Worm *worm, Level *level);
+    void (*wormCollide)(Worm *worm, void *game);
     int explosionRadius;
+    Anim *anim;
+    int animFrame;
 } Item;
+
+/**
+    Structure subclass items are cast to to access the item aspect of them.
+*/
+typedef struct {
+    Item *item;
+} ItemSubclass;
 
 /**
     Structure for health crate.
@@ -44,6 +55,8 @@ typedef struct {
 */
 typedef struct {
     Item *item;
+    clock_t start;
+    float delay;
 } Mine;
 
 /**
@@ -57,7 +70,7 @@ typedef struct {
     
     @return the created health crate
 */
-HealthCrate *createHealthCrate(int x, int y, int explosionRadius);
+HealthCrate *createHealthCrate(int x, int y, int explosionRadius, int healAmount, void *game);
 
 /**
     Creates a health crate at coordinates (x,y), an explosion
@@ -70,7 +83,7 @@ HealthCrate *createHealthCrate(int x, int y, int explosionRadius);
     
     @return the created weapon crate
 */
-WeaponCrate *createWeaponCrate(int x, int y, int explosionRadius, Weapon *weapon);
+WeaponCrate *createWeaponCrate(int x, int y, int explosionRadius, Weapon *weapon, bool isTrap);
 
 /**
     Creates a mine at (x,y) with the given explosion radius.
@@ -82,7 +95,7 @@ WeaponCrate *createWeaponCrate(int x, int y, int explosionRadius, Weapon *weapon
     
     @return the created mine
 */
-Mine *createMine(int x, int y, int explosionRadius);
+Mine *createMine(int x, int y, int explosionRadius, clock_t start, float delay);
 
 /**
     Frees the health crate.
@@ -104,4 +117,8 @@ void freeWeaponCrate(WeaponCrate *weaponCrate);
     @param mine the mine being freed
 */
 void freeMine(Mine *mine);
+
+void drawItem(Item *item);
+
+void clearItem(Item *item, Level *level);
 #endif /* ITEM_H */

@@ -57,6 +57,8 @@ Anim **loadAnims(SDL_Surface *screen, int *len) {
     anims[wormStill] = loadAnim("anims/worm still.ppm", 1, 40, 40, 1, screen, &blue);
     anims[dynamiteAnim] = loadAnim("anims/dynamite.ppm", 5, 40, 40, 25, screen, &blue);
     anims[explosion] = loadAnim("anims/explosion2.ppm", 7, 76, 78, 20, screen, &red);
+    anims[healthCrate] = loadAnim("anims/healthCrate.ppm", 1, 20, 20, 1, screen, &blue);
+    anims[weaponCrate] = loadAnim("anims/weaponCrate.ppm", 1, 20, 20, 1, screen, &red);
     //dynamite 25 fps
     //explosion 20 fps
     for(int i = 0; i < *len; i++){
