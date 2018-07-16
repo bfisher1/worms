@@ -12,6 +12,14 @@
 #include "weapon.h"
 #include "anim.h"
 #include "level.h"
+#include <stdbool.h>
+
+typedef enum {
+    healthCrateItem,
+    weaponCrateItem,
+    mineItem,
+    dynamiteItem
+} ItemName;
 
 /**
     An item has a physical object component, a current animation, and
@@ -24,6 +32,9 @@ typedef struct ItemTag {
     int explosionRadius;
     Anim *anim;
     int animFrame;
+    void (*free)(void *self);
+    void (*act)(void *self);
+    ItemName name;
 } Item;
 
 /**
@@ -58,6 +69,15 @@ typedef struct {
     clock_t start;
     float delay;
 } Mine;
+
+/**
+    Structure for a dynamite item.
+*/
+typedef struct {
+    Item *item;
+    clock_t start;
+    float delay;
+} Dynamite;
 
 /**
     Creates a health crate with coordinates (x,y) and an explosion
@@ -102,7 +122,7 @@ Mine *createMine(int x, int y, int explosionRadius, clock_t start, float delay);
 
     @param healthCrate the crate being freed
 */
-void freeHealthCrate(HealthCrate *healthCrate);
+void freeHealthCrate(void *healthCrate);
 
 /**
     Frees the weapon crate.
@@ -121,4 +141,11 @@ void freeMine(Mine *mine);
 void drawItem(Item *item);
 
 void clearItem(Item *item, Level *level);
+
+Dynamite *createDynamite(int x, int y, int explosionRadius, float delay, void *game);
+
+void freeDynamite(void *dynamite);
+
+bool readyToExplode(void *explosive);
+
 #endif /* ITEM_H */

@@ -41,6 +41,7 @@ typedef struct {
     Worm *player;
     Team *currentTeam;
     Font *font;
+    Queue *stamps;
 } Game;
 
 /**

@@ -107,9 +107,8 @@ void drawWeapon(WeaponName name, int x, int y, int *frame, void *game) {
 }
 
 void fireWeapon(WeaponName name, void *game, int x, int y, float direction, float velocity) {
-    cutCircleInLevel( ((Game *) game)->level, x, y, 20 );
-    cutCircleInLevel( ((Game *) game)->level, x+40, y, 40 );
-    //enqueue((Game *game)->items, );
+    Dynamite *dynamite = createDynamite(x, y, DYNAMITE_EXPLOSION_RADIUS, DYNAMITE_DELAY, ((Game *) game) );
+    enqueue( ((Game *) game)->items, dynamite );
 }
 
 //void continueWeapon

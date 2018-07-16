@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -std=c99 -g 
 
-Worms : main.o graphics.o util.o level.o worm.o physObj.o item.o game.o anim.o team.o weapon.o ./Queue/queue.o text.o
+Worms : main.o graphics.o util.o level.o worm.o physObj.o item.o game.o anim.o team.o weapon.o ./Queue/queue.o text.o stamp.o
 	$(CC) $(CFLAGS) -o $@ $^ -lX11 -lm -I/usr/local/include -L/usr/local/lib -lSDL
 
 util.o : util.c util.h
@@ -26,9 +26,11 @@ team.o : team.c team.h worm.h weapon.h util.h
 
 weapon.o : weapon.c weapon.h physObj.h level.h game.h ./Queue/queue.h item.h
 
+stamp.o : stamp.c stamp.h anim.h level.h
+
 text.o : text.c text.h
 
 main.o : main.c util.h graphics.h level.h worm.h physObj.h item.h game.h anim.h team.h weapon.h ./Queue/queue.h
 
 clean:
-	rm -f main.o graphics.o util.o level.o worm.o physObj.o item.o game.o anim.o team.o weapon.o Worms ./Queue/queue.o text.o
+	rm -f main.o graphics.o util.o level.o worm.o physObj.o item.o game.o anim.o team.o weapon.o Worms ./Queue/queue.o text.o stamp.o

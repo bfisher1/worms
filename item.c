@@ -6,7 +6,7 @@
 */
 #define ITEM_WIDTH 20
 #define ITEM_HEIGHT 20
-Item *createItem(int x, int y, int explosionRadius, void (*wormCollide)(Worm *worm, void *game), Anim *anim) {
+Item *createItem(ItemName name, int x, int y, int explosionRadius, void (*wormCollide)(Worm *worm, void *game), Anim *anim, void (*free)(void *self)) {
     Item *item = (Item *) malloc(sizeof(Item));
     Box *frame = (Box *) malloc(sizeof(Box));
     frame->x = 0;
@@ -18,6 +18,8 @@ Item *createItem(int x, int y, int explosionRadius, void (*wormCollide)(Worm *wo
     item->wormCollide = wormCollide;
     item->anim = anim;
     item->animFrame = 0;
+    item->free = free;
+    item->name = name;
     return item;
 }
 
@@ -41,7 +43,7 @@ void noCollideEvent(Worm *worm, void *game) {
 
 HealthCrate *createHealthCrate(int x, int y, int explosionRadius, int healAmount, void *game) {
     HealthCrate *crate = (HealthCrate *) malloc(sizeof(HealthCrate));
-    crate->item = createItem(x, y, explosionRadius, healthCrateWormCollide, ((Game *) game)->animBank[healthCrate] );
+    crate->item = createItem(healthCrateItem, x, y, explosionRadius, healthCrateWormCollide, ((Game *) game)->animBank[healthCrate], freeHealthCrate );
     crate->healAmount = healAmount;
     return crate;
 }
@@ -50,9 +52,10 @@ WeaponCrate *createWeaponCrate(int x, int y, int explosionRadius, Weapon *weapon
 
 Mine *createMine(int x, int y, int explosionRadius, clock_t start, float delay);
 
-void freeHealthCrate(HealthCrate *healthCrate) {
-    freeItem(healthCrate->item);
-    free(healthCrate);
+void freeHealthCrate(void *healthCrate) {
+    HealthCrate *h = (HealthCrate *) healthCrate;
+    freeItem(h->item);
+    free(h);
 }
 
 void freeWeaponCrate(WeaponCrate *weaponCrate);
@@ -68,4 +71,23 @@ void clearItem(Item *item, Level *level) {
      (item->obj->y - item->anim->height) / 8,
     (item->obj->x + item->anim->width) ,
     (item->obj->y + item->anim->height) );  
+}
+
+void freeDynamite(void *dynamite) {
+    Dynamite *d = (Dynamite *) dynamite;
+    freeItem(d->item);
+    free(d);
+}
+
+Dynamite *createDynamite(int x, int y, int explosionRadius, float delay, void *game) {
+    Dynamite *dynamite = (Dynamite *) malloc(sizeof(Dynamite));
+    dynamite->item = createItem(dynamiteItem, x, y, explosionRadius, noCollideEvent, ((Game *) game)->animBank[dynamiteAnim], freeDynamite );
+    dynamite->delay = delay;
+    dynamite->start = clock();
+    return dynamite;
+}
+
+bool readyToExplode(void *explosive) {
+    Dynamite *dynamite = (Dynamite *) explosive;
+    return ( (float) (clock() - dynamite->start) ) / CLOCKS_PER_SEC >= dynamite->delay;
 }

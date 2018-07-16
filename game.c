@@ -1,6 +1,8 @@
 #include "game.h"
 #include <stdlib.h>
 #include "util.h"
+#include <math.h>
+#include "stamp.h"
 #define WIDTH 1000
 #define HEIGHT 800
 #define DEPTH 32
@@ -10,6 +12,8 @@
 #define MAX_X_VELOCITY 5.0
 #define JUMP 8.0
 #define MAX_JUMP_VELOCITY 25
+
+void explodeWorms(Queue *teams, Game *game, int x, int y, int radius, float maxVelocity);
 
 void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, bool *space, bool *tab, bool *esc);
 
@@ -38,6 +42,7 @@ Game *startGame(Level *level, Queue *teams, int turnLength, float gravity) {
     game->level = level;
     game->teams = teams;
     game->items = makeQueue();
+    game->stamps = makeQueue();
     game->animBank = animBank;
     game->animNumber = animBankLen;
     game->gravity = gravity;
@@ -84,8 +89,10 @@ void endGame(Game *game) {
     }
     int itemNumber = queueSize(game->items);
     for(int i = 0; i < itemNumber; i++) {
-        //freeItem
+        ItemSubclass *item = dequeue(game->items);
+        item->item->free(item);
     }
+    //FREE STAMPS TODO
     freeQueue(game->items);
     freeQueue(game->teams);
     freeFont(game->font);
@@ -95,7 +102,7 @@ void endGame(Game *game) {
 bool gameLoop(Game *game) {
     static SDL_Event event;
     static bool left, right, up, down, space, tab, esc, le, ri, to, bo;
-    static int mousex, mousey, teamNumber, wormNumber, itemNumber, weaponFrame;
+    static int mousex, mousey, teamNumber, wormNumber, stampNumber, itemNumber, weaponFrame;
     static Worm *worm;
     static Team *team;
     readKeys(&event, &left, &right, &up, &down, &space, &tab, &esc);
@@ -148,8 +155,10 @@ bool gameLoop(Game *game) {
 
         if(space) {
             fireWeapon(game->currentTeam->weapons[game->currentTeam->selectedWeapon].name, (void *) game, game->player->obj->x, game->player->obj->y, 45 * PI / 180, 10);
+            space = false;
         }
 
+        //WORMS
         for(int i = 0; i < teamNumber; i++) {
             team = dequeue(game->teams);
             enqueue(game->teams, team);
@@ -166,11 +175,13 @@ bool gameLoop(Game *game) {
                 drawWorm(worm);
             }
         }
+
+        //ITEMS
         itemNumber = queueSize(game->items);
         for(int i = 0; i < itemNumber; i++) {
             //do item stuff
             void *subItem = dequeue(game->items);
-            enqueue(game->items, subItem);
+            
             Item *item = ((ItemSubclass *) subItem)->item;
 
             isColliding(item->obj, game->level, &le, &ri, &to, &bo);
@@ -179,7 +190,37 @@ bool gameLoop(Game *game) {
             }
             move(item->obj, game->level, 0);
             drawItem(item);
+
+            if(item->name == dynamiteItem ) {
+                Dynamite *dynamite = (Dynamite *) subItem;
+                if(readyToExplode(dynamite)) {
+                    int radius = 80;
+                    cutCircleInLevel( ((Game *) game)->level, item->obj->x, item->obj->y, radius );
+                    Stamp *explosionStamp = createStamp(game->animBank[explosion], 0, false, item->obj->x, item->obj->y);
+                    enqueue(game->stamps, explosionStamp);
+                    explodeWorms(game->teams, game, item->obj->x, item->obj->y, radius, MAX_JUMP_VELOCITY );
+                    item->free(subItem);
+                } else {
+                    enqueue(game->items, subItem);
+                }
+            } else {
+                enqueue(game->items, subItem);
+            }
+            
         }
+
+        stampNumber = queueSize(game->stamps);
+        for(int i = 0; i < stampNumber; i++) {
+            Stamp *stamp = dequeue(game->stamps);
+            drawStamp(stamp, stamp->x, stamp->y);
+            if(!hasStampFinished(stamp)){
+                enqueue(game->stamps, stamp);
+            } else {
+                clearStamp(stamp, game->level, stamp->x, stamp->y);
+                freeStamp(stamp);
+            }
+        }
+
         drawWeapon(game->currentTeam->weapons[game->currentTeam->selectedWeapon].name, game->player->obj->x, game->player->obj->y, &weaponFrame, (void *) game);
         /*
         if(down) {
@@ -204,6 +245,13 @@ bool gameLoop(Game *game) {
             enqueue(game->items, subItem);
             Item *item = ((ItemSubclass *) subItem)->item;
             clearItem(item, game->level);
+        }
+
+        stampNumber = queueSize(game->stamps);
+        for(int i = 0; i < stampNumber; i++) {
+            Stamp *stamp = dequeue(game->stamps);
+            clearStamp(stamp, game->level, stamp->x, stamp->y);
+            enqueue(game->stamps, stamp);
         }
         
     }
@@ -270,6 +318,41 @@ void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, b
                         break;
                 }
                 break;
+        }
+    }
+}
+
+void explodeWorms(Queue *teams, Game *game, int x, int y, int radius, float maxVelocity) {
+    float newVelocity, dir, strength, distance;
+    int teamNumber, wormNumber;
+    teamNumber = queueSize(game->teams);
+    Team *team;
+    Worm *worm;
+    for(int i = 0; i < teamNumber; i++) {
+        team = dequeue(game->teams);
+        enqueue(game->teams, team);
+        wormNumber = team->teamNumber;
+        for(int j = 0; j < wormNumber; j++) {
+            worm = team->worms[j];
+            distance = dist(x, y, worm->obj->x, worm->obj->y);
+            if(distance <= radius) {
+                strength = (radius - distance) / radius;
+                hurtWorm(worm, 25 * strength);
+                newVelocity = strength * maxVelocity;
+                //newVelocity = maxVelocity;
+                //if worm is too close, direction might not be accurate.
+                //compensate by pretending worm is 10 pix higher
+                /*
+                if(distance < 60){
+                    dir = atan2(-1000 + worm->obj->y - y, worm->obj->x - x);
+                } else {
+                    dir = atan2(worm->obj->y - y, worm->obj->x - x);
+                }
+                */
+                dir = atan2(worm->obj->y - y - 5, worm->obj->x - x);
+                //printf("%f \n", distance);
+                accel(worm->obj, dir, newVelocity, maxVelocity);
+            }
         }
     }
 }
