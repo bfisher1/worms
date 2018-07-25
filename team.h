@@ -58,4 +58,6 @@ int teamHealth(Team *team);
 */
 void freeTeam(Team *team);
 
+void removeWormFromTeam(Team *team, int index);
+
 #endif /* TEAM_H */

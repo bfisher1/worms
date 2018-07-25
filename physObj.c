@@ -197,7 +197,13 @@ void moveToNearestOpenLocation(PhysObj *obj, Level *level) {
         }
     }
 }
-
+void ghostMove(PhysObj *obj) {
+    float vx, vy;
+    vx = obj->velocity * cos(obj->direction);
+    vy = obj->velocity * sin(obj->direction);
+    obj->x += vx;
+    obj->y += vy;
+}
 
 void move(PhysObj *obj, Level *level, float bounce) {
     //int xprev, yprev;
@@ -388,4 +394,12 @@ void jump(PhysObj *obj, Level *level, float amount) {
     if(onGround(obj, level)){
         obj->yvelocity = -amount;
     }
+}
+
+bool areObjectsColliding(PhysObj *obj1, PhysObj *obj2) {
+    int dx = abs(obj1->x - obj2->x);
+    int dy = abs(obj1->y - obj2->y);
+    int widthSum = obj1->frame->width / 2 + obj2->frame->width / 2;
+    int heightSum = obj1->frame->height / 2 + obj2->frame->height / 2;
+    return dx <= widthSum && dy <= heightSum;
 }

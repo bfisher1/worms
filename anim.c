@@ -1,5 +1,7 @@
 #include "anim.h"
 #include <stdlib.h>
+#define ANIMS_NUM 18
+
 /**
     Loads an animation from the given file. Width and height pertain
     to the size of each frame in the animation sheet. Fps controls
@@ -59,6 +61,18 @@ Anim **loadAnims(SDL_Surface *screen, int *len) {
     anims[explosion] = loadAnim("anims/explosion2.ppm", 7, 76, 78, 20, screen, &red);
     anims[healthCrate] = loadAnim("anims/healthCrate.ppm", 1, 20, 20, 1, screen, &blue);
     anims[weaponCrate] = loadAnim("anims/weaponCrate.ppm", 1, 20, 20, 1, screen, &red);
+    anims[blowTorchStill] = loadAnim("anims/blow torch.ppm", 1, 80, 40, 1, screen, &blue);
+    anims[blowTorchFire] = loadAnim("anims/blow torch fire.ppm", 5, 80, 40, 30, screen, &blue);
+    anims[mineOffAnim] = loadAnim("anims/mine off.ppm", 1, 26, 15, 1, screen, &blue);
+    anims[mineBlinkAnim] = loadAnim("anims/mine blink.ppm", 2, 26, 15, 4, screen, &blue);
+    anims[crossHair] = loadAnim("anims/cross hair.ppm", 1, 19, 19, 1, screen, &blue);
+    anims[bazookaAnim] = loadAnim("anims/bazooka.ppm", 1, 80, 40, 1, screen, &blue);
+    anims[missileAnim] = loadAnim("anims/bazooka shell.ppm", 1, 14, 12, 1, screen, &blue);
+    anims[pistolAnim] = loadAnim("anims/pistol.ppm", 1, 30, 30, 1, screen, &blue);
+    anims[bulletAnim] = loadAnim("anims/bullet.ppm", 1, 9, 9, 1, screen, &blue);
+    anims[smokeAnim] = loadAnim("anims/smoke.ppm", 10, 40, 40, 12, screen, &blue);
+    anims[invAnim] = loadAnim("anims/inventory.ppm", 1, 188, 77, 1, screen, &blue);
+    
     //dynamite 25 fps
     //explosion 20 fps
     for(int i = 0; i < *len; i++){
@@ -82,11 +96,11 @@ void freeAnims(Anim **anims, int len) {
     free(anims);
 }
 
-bool playAnim(Anim *anim, int x, int y, float angle, int *frame) {
+bool playAnim(Anim *anim, int x, int y, float angle, int *frame, bool flippedHoriz) {
     drawSubImage(anim->spriteSheet, anim->screen,
     x, y, 0, *frame * anim->height,
     anim->width, anim->height, &anim->background,
-    anim->flippedHoriz, angle);
+    flippedHoriz, angle);
 
     if( (float) (clock() - anim->lastPlayed) / CLOCKS_PER_SEC >= (1.0 / anim->fps) ){
         anim->lastPlayed = clock();

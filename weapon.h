@@ -6,6 +6,8 @@
 */
 #ifndef WEAPON_H
 #define WEAPON_H
+#include <stdbool.h>
+#include <stdarg.h>
 
 /**
     Enumeration for the names of weapons.
@@ -15,7 +17,8 @@ typedef enum {
     mine,
     dynamite,
     parachute,
-    pistol
+    pistol,
+    blowTorch
 } WeaponName;
 
 /**
@@ -24,6 +27,8 @@ typedef enum {
 */
 typedef struct WeaponTag {
     WeaponName name;
+    bool fireAtRelease;
+    bool rangedAttack;
     void (*drawInHand)(struct WeaponTag *weapon);
     void (*activateWeapon)(void *game, int x, int y, float velocity, float orientation);
 } Weapon;
@@ -32,10 +37,17 @@ Weapon *createDynamiteWeapon();
 Weapon *createMineWeapon();
 Weapon *createPistolWeapon();
 
-void drawWeapon(WeaponName name, int x, int y, int *frame, void *game);
+void drawWeapon(WeaponName name, int x, int y, int *frame, void *game, bool firing, bool flippedHoriz, float weaponDir);
 
 void freeWeapon(Weapon *weapon);
 
 void fireWeapon(WeaponName name, void *game, int x, int y, float direction, float velocity);
+
+void drawCrossHair(void *game, int cx, int cy, float angle, float force);
+
+void clearCrossHair(void *game, int cx, int cy, float angle, float force);
+
+Weapon *makeWeapons(int len, ...);
+void freeWeapons(Weapon *weapons);
 
 #endif /* WEAPON_H */

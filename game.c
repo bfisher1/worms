@@ -3,19 +3,38 @@
 #include "util.h"
 #include <math.h>
 #include "stamp.h"
-#define WIDTH 1000
-#define HEIGHT 800
+#define WIDTH 1920
+#define HEIGHT 696
 #define DEPTH 32
 #define TERMINAL_FALL_VELOCITY 25.0
-#define REFRESH_RATE .005
+#define REFRESH_RATE .001
 #define X_ACCEL .2
 #define MAX_X_VELOCITY 5.0
-#define JUMP 8.0
+#define JUMP 7.0
 #define MAX_JUMP_VELOCITY 25
+#define WORM_SPEED 2
+#define WEAPON_TURN_SPEED (PI/90.0)
+#define MAX_WEAPON_TURN (PI/2.0)
+#define WEAPON_FORCE_MAX 100
+#define WEAPON_FORCE_DELTA 4
+#define WEAPON_FORCE_NON_RANGED 70
+#define WEAPON_FORCE_VEL_RATIO .1
+#define WORM_BOUNCE 0
+#define ITEM_BOUNCE .6
+#define INV_CELLS_HIGH 2
+#define INV_CELLS_WIDE 5
+#define NAME_HEIGHT 60
+
+void clearWormName(Game *game, Worm *worm);
+void drawWormName(Game *game, Worm *worm);
 
 void explodeWorms(Queue *teams, Game *game, int x, int y, int radius, float maxVelocity);
 
-void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, bool *space, bool *tab, bool *esc);
+void drawInventory(Game *game, Team *team);
+
+void readKeys(SDL_Event *event, bool *left, bool *right, bool *up,
+              bool *down, bool *space, bool *tab, bool *esc, bool *enter,
+              bool *backspace, bool *one, bool *two, bool *three);
 
 Game *startGame(Level *level, Queue *teams, int turnLength, float gravity) {
     SDL_Surface *screen;
@@ -36,8 +55,7 @@ Game *startGame(Level *level, Queue *teams, int turnLength, float gravity) {
         exit(EXIT_FAILURE);
     }
 
-    time_t t;
-    srand((unsigned) time(&t));
+    
     Game *game = (Game *) malloc(sizeof(Game));
     game->level = level;
     game->teams = teams;
@@ -68,8 +86,8 @@ Game *startGame(Level *level, Queue *teams, int turnLength, float gravity) {
             switchAnim(team->worms[j], game->animBank[wormStill]);
         }
     }
-    game->player = team->worms[0];
     game->currentTeam = team;
+    game->player = team->worms[0];
     game->lastUpdate = clock();
     return game;
 }
@@ -101,27 +119,53 @@ void endGame(Game *game) {
 
 bool gameLoop(Game *game) {
     static SDL_Event event;
-    static bool left, right, up, down, space, tab, esc, le, ri, to, bo;
+    static bool left, right, up, down, space, tab, enter, backspace, esc, one, two, three, le, ri, to, bo, anyCol;
+    static bool firing = false;
     static int mousex, mousey, teamNumber, wormNumber, stampNumber, itemNumber, weaponFrame;
+    static int fps = 0;
+    static int playerIdx = 0;
+    static float weaponDir = 0.0;
+    static float weaponDirTopAngle = 0.0;
+    static float weaponForce = 1;
+    static float weaponForceDelta = WEAPON_FORCE_DELTA;
     static Worm *worm;
     static Team *team;
-    readKeys(&event, &left, &right, &up, &down, &space, &tab, &esc);
+    static Weapon *currentWeapon;
+    static clock_t lastSec = 0;
+    readKeys(&event, &left, &right, &up, &down, &space, &tab, &esc, &enter, &backspace, &one, &two, &three);
     if(esc) {
         return true;
     }
     SDL_GetMouseState(&mousex, &mousey);
 
     teamNumber = queueSize(game->teams);
+
+    if( ( (float) (clock() - lastSec)) / CLOCKS_PER_SEC >= 1.0 ) {
+        
+        lastSec = clock();
+        printf("%d \n", fps);
+        fps = 0;
+    }
     
     if( ( (float) (clock() - game->lastUpdate)) / CLOCKS_PER_SEC >= REFRESH_RATE ) {
+        fps++;
+        currentWeapon = &game->currentTeam->weapons[game->currentTeam->selectedWeapon];
+
+        if(tab) {
+            tab = false;
+            playerIdx++;
+            playerIdx %= game->currentTeam->teamNumber;
+            printf("%d\n", playerIdx);
+        }
+        game->player = game->currentTeam->worms[playerIdx];
 
         isColliding(game->player->obj, game->level, &le, &ri, &to, &bo);
         if(right) {
             switchAnim(game->player, game->animBank[wormMove]);
             if(to){
-                accel(game->player->obj, game->player->obj->rotation, .8, .8);
+                accel(game->player->obj, game->player->obj->rotation, WORM_SPEED, WORM_SPEED);
             } else {
-                game->player->obj->x += .4;
+                game->player->obj->x += WORM_SPEED / 2.0;
             }
             //printf("%f\n", worm->obj->rotation);
             
@@ -132,17 +176,26 @@ bool gameLoop(Game *game) {
             switchAnim(game->player, game->animBank[wormMove]);
             //accel(worm->obj, PI, X_ACCEL, MAX_X_VELOCITY);
             if(to) {
-                accel(game->player->obj, game->player->obj->rotation + PI, .8, .8);
+                accel(game->player->obj, game->player->obj->rotation + PI, WORM_SPEED, WORM_SPEED);
             } else {
-                game->player->obj->x -= .4;
+                game->player->obj->x -= WORM_SPEED / 2.0;
             }
             
             //moveLeft(worm->obj,level, 3);
             flipWormLeft(game->player);
         }
-        if(up && to) {
+        if(backspace && to) {
             accel(game->player->obj,  -PI/2.0, JUMP, MAX_JUMP_VELOCITY);
         }
+        /*
+        else if(enter && to) {
+            float angleFromTop = PI/4.0;
+            if(game->player->facingRight) {
+                angleFromTop *= -1;
+            }
+            accel(game->player->obj,  -PI/2.0 - angleFromTop, JUMP, MAX_JUMP_VELOCITY);
+        }
+        */
         if(!right && !left) {
             decel(game->player->obj, X_ACCEL);
             switchAnim(game->player, game->animBank[wormStill]);
@@ -152,11 +205,138 @@ bool gameLoop(Game *game) {
                 flipWormLeft(game->player);
             }
         }
+        
+        if(up && weaponDirTopAngle >= -MAX_WEAPON_TURN) {
+            weaponDirTopAngle -= WEAPON_TURN_SPEED;
+        }
+        if(down && weaponDirTopAngle <= MAX_WEAPON_TURN){
+            weaponDirTopAngle += WEAPON_TURN_SPEED;
+        }
+        //weaponDir = weaponDirTopAngle;
+        if(game->player->facingRight) {
+            weaponDir = weaponDirTopAngle;
+        } else {
+            weaponDir = -weaponDirTopAngle;
+        }
+        float weaponFireDir = weaponDir;
+        if(!game->player->facingRight) {
+            weaponFireDir += PI;
+        }
 
         if(space) {
-            fireWeapon(game->currentTeam->weapons[game->currentTeam->selectedWeapon].name, (void *) game, game->player->obj->x, game->player->obj->y, 45 * PI / 180, 10);
-            space = false;
+            if(!firing) {
+                weaponForce = 0;
+            }
+            firing = true;
         }
+
+        if(firing) {
+            if(currentWeapon->rangedAttack) {
+                weaponForce += weaponForceDelta;
+                if(weaponForce >= WEAPON_FORCE_MAX) {
+                    weaponForce = WEAPON_FORCE_MAX;
+                    weaponForceDelta = -abs(weaponForceDelta);
+                }
+                else if(weaponForce <= 0) {
+                    weaponForce = 0;
+                    weaponForceDelta = abs(weaponForceDelta);
+                }
+            } else {
+                weaponForce = WEAPON_FORCE_NON_RANGED;
+            }
+            
+            if(!currentWeapon->fireAtRelease || (currentWeapon->fireAtRelease && !space)) {
+                fireWeapon(game->currentTeam->weapons[game->currentTeam->selectedWeapon].name,
+                           (void *) game, game->player->obj->x, game->player->obj->y,
+                           weaponFireDir, weaponForce * WEAPON_FORCE_VEL_RATIO);
+                firing = false;
+                game->currentTeam->weaponNums[game->currentTeam->selectedWeapon]--;
+            }
+        } else {
+            weaponForce = WEAPON_FORCE_NON_RANGED;
+        }
+
+        if(one) {
+            game->currentTeam->selectedWeapon = 0;
+        }
+
+        if(two) {
+            game->currentTeam->selectedWeapon = 1;
+        }
+
+        if(three) {
+            game->currentTeam->selectedWeapon = 2;
+        }
+
+        //WORM AND ITEM COLLISIONS
+        for(int i = 0; i < teamNumber; i++) {
+            team = dequeue(game->teams);
+            enqueue(game->teams, team);
+            wormNumber = team->teamNumber;
+            for(int j = 0; j < wormNumber; j++) {
+                worm = team->worms[j];
+                itemNumber = queueSize(game->items);
+                for(int k = 0; k < itemNumber; k++) {
+                    //do item stuff
+                    void *subItem = dequeue(game->items);
+                    bool addBackItem = true;
+                    
+                    Item *item = ((ItemSubclass *) subItem)->item;
+                    if(areObjectsColliding(item->obj, worm->obj)) {
+                        addBackItem = !item->wormCollide(((ItemSubclass *) subItem), worm, game);
+                    }
+                    if(addBackItem) {
+                        enqueue(game->items, subItem);
+                    }
+                }
+            }
+        }
+
+        //ITEM AND ITEM COLLISIONS
+        itemNumber = queueSize(game->items);
+        for(int i = 0; i < queueSize(game->items); i++) {
+            void *subItem1 = dequeue(game->items);
+            bool addBackItem1 = true;
+            Item *item1 = ((ItemSubclass *) subItem1)->item;
+            for(int j = i + 1; j < itemNumber; j++) {
+                void *subItem2 = dequeue(game->items);
+                bool addBackItem2 = true;
+                Item *item2 = ((ItemSubclass *) subItem2)->item;
+                if(areObjectsColliding(item1->obj, item2->obj)) {
+                    int firstCol = item1->itemCollide(item1, item2, game);
+                    int secCol = item2->itemCollide(item2, item1, game);
+                    if(firstCol == ADD_BACK_NO_ITEMS) {
+                        addBackItem1 = false;
+                        addBackItem2 = false;
+                    }
+                    else if(firstCol == ADD_BACK_FIRST_ITEM) {
+                        addBackItem2 = false;
+                    } else if(firstCol == ADD_BACK_SECOND_ITEM) {
+                        addBackItem1 = false;
+                    }
+                    if(secCol == ADD_BACK_NO_ITEMS) {
+                        addBackItem1 = false;
+                        addBackItem2 = false;
+                    }
+                    else if(secCol == ADD_BACK_FIRST_ITEM) {
+                        addBackItem1 = false;
+                    } else if(secCol == ADD_BACK_SECOND_ITEM) {
+                        addBackItem2 = false;
+                    }
+                }
+                if(addBackItem2) {
+                    enqueue(game->items, subItem2);
+                } else {
+                    ((ItemSubclass *) subItem2)->item->free(subItem2);
+                }
+            }
+            if(addBackItem1) {
+                enqueue(game->items, subItem1);
+            } else {
+                ((ItemSubclass *) subItem1)->item->free(subItem1);
+            }
+        }
+        
 
         //WORMS
         for(int i = 0; i < teamNumber; i++) {
@@ -170,9 +350,18 @@ bool gameLoop(Game *game) {
                 if(!bo) {
                     accel(worm->obj, PI/2.0, game->gravity, TERMINAL_FALL_VELOCITY);
                 }
-                move(worm->obj, game->level, 0);
+                move(worm->obj, game->level, WORM_BOUNCE);
                 tilt(worm->obj, game->level, 2 * PI/180.0, 45.0 * PI / 180.0,  game->screen );
-                drawWorm(worm);
+                if(worm->health <= 0) {
+                    //clearWormName(game, worm);
+                    Stamp *smokeStamp = createStamp(game->animBank[smokeAnim], 0, false, worm->obj->x, worm->obj->y);
+                    enqueue(game->stamps, smokeStamp);
+                    removeWormFromTeam(team, j);
+                } else {
+                    drawWorm(worm);
+                    //drawWormName(game, worm);
+                }
+                
             }
         }
 
@@ -184,14 +373,26 @@ bool gameLoop(Game *game) {
             
             Item *item = ((ItemSubclass *) subItem)->item;
 
-            isColliding(item->obj, game->level, &le, &ri, &to, &bo);
-            if(!bo) {
+            anyCol = isColliding(item->obj, game->level, &le, &ri, &to, &bo);
+            if(!bo && item->name != bulletItem) {
                 accel(item->obj, PI/2.0, game->gravity, TERMINAL_FALL_VELOCITY);
+                move(item->obj, game->level, ITEM_BOUNCE);
+            } else {
+                ghostMove(item->obj);
             }
-            move(item->obj, game->level, 0);
             drawItem(item);
 
-            if(item->name == dynamiteItem ) {
+            if(item->name == bulletItem) {
+                Bullet *bullet = (Bullet *) subItem;
+                if(bulletOutOfRange(bullet) || anyCol || bullet->item->obj->velocity < 1){
+                    cutCircleInLevel( ((Game *) game)->level, item->obj->x, item->obj->y, bullet->item->explosionRadius );
+                    clearItem(item, game->level);
+                    freeBullet(bullet);
+                } else {
+                    enqueue(game->items, subItem);
+                }
+            }
+            else if(item->name == dynamiteItem ) {
                 Dynamite *dynamite = (Dynamite *) subItem;
                 if(readyToExplode(dynamite)) {
                     int radius = 80;
@@ -221,13 +422,16 @@ bool gameLoop(Game *game) {
             }
         }
 
-        drawWeapon(game->currentTeam->weapons[game->currentTeam->selectedWeapon].name, game->player->obj->x, game->player->obj->y, &weaponFrame, (void *) game);
-        /*
-        if(down) {
-            writeText(game->font, "Goodbye world 123", 100, 100);
-        }
-        */
+        drawWeapon(game->currentTeam->weapons[game->currentTeam->selectedWeapon].name,
+                   game->player->obj->x, game->player->obj->y,
+                   &weaponFrame, (void *) game, space, game->player->facingRight, weaponDir);
+
+        drawWormName(game, game->player);
+        drawInventory(game, game->currentTeam);
+        drawCrossHair(game, game->player->obj->x, game->player->obj->y, weaponFireDir, weaponForce);
+        
         updateScreen(game->screen);
+        
         for(int i = 0; i < teamNumber; i++) {
             team = dequeue(game->teams);
             enqueue(game->teams, team);
@@ -235,6 +439,7 @@ bool gameLoop(Game *game) {
             for(int j = 0; j < wormNumber; j++) {
                 worm = team->worms[j];
                 clearWorm(worm, game->level);
+                //clearWormName(game, worm);
             }
         }
 
@@ -253,13 +458,17 @@ bool gameLoop(Game *game) {
             clearStamp(stamp, game->level, stamp->x, stamp->y);
             enqueue(game->stamps, stamp);
         }
+        clearWormName(game, game->player);
+        clearCrossHair(game, game->player->obj->x, game->player->obj->y, weaponFireDir, weaponForce);
         
+       game->lastUpdate = clock(); 
     }
+    
     return false;
 
 }
 
-void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, bool *space, bool *tab, bool *esc) {
+void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, bool *space, bool *tab, bool *esc, bool *enter, bool *backspace, bool *one, bool *two, bool *three) {
     while(SDL_PollEvent(event)) {
         
         switch (event->type) 
@@ -288,6 +497,21 @@ void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, b
                         break;
                     case SDLK_TAB:
                         *tab = true;
+                    case SDLK_RETURN:
+                        *enter = true;
+                        break;
+                    case SDLK_BACKSPACE:
+                        *backspace = true;
+                        break;
+                    case SDLK_1:
+                        *one = true;
+                        break;
+                    case SDLK_2:
+                        *two = true;
+                        break;
+                    case SDLK_3:
+                        *three = true;
+                        break;
                     default:
                         break;
                 }
@@ -314,6 +538,22 @@ void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, b
                         break;
                     case SDLK_TAB:
                         *tab = false;
+                        break;
+                    case SDLK_RETURN:
+                        *enter = false;
+                        break;
+                    case SDLK_BACKSPACE:
+                        *backspace = false;
+                        break;
+                    case SDLK_1:
+                        *one = false;
+                        break;
+                    case SDLK_2:
+                        *two = false;
+                        break;
+                    case SDLK_3:
+                        *three = false;
+                        break;
                     default:
                         break;
                 }
@@ -355,4 +595,51 @@ void explodeWorms(Queue *teams, Game *game, int x, int y, int radius, float maxV
             }
         }
     }
+}
+
+void drawInventory(Game *game, Team *team) {
+    int cx, cy, f, w, h, aw, ah, ix, iy;
+    f = 0;
+    char weaponNum[10];
+    //width and height of inventory anim
+    aw = game->animBank[invAnim]->width;
+    ah = game->animBank[invAnim]->height;
+    //center of the inventory on the screen
+    cx = WIDTH/2;
+    cy = HEIGHT - ah / 2;
+    //width and height of each cell in the inventory
+    w =  aw/ INV_CELLS_WIDE;
+    h = ah / INV_CELLS_HIGH;
+    playAnim(game->animBank[invAnim], cx, cy, 0, &f, false);
+    for(int i = 0; i < team->weaponNumber; i++){
+        //coordinates for the cell
+        ix = cx - aw/2 + w/2 + i * w;
+        iy = cy - h/2;
+        f = 0;
+        drawWeapon(team->weapons[i].name, ix, iy, &f, game, false, false, 0);
+        sprintf(weaponNum, "%d", team->weaponNums[i]);
+        writeText(game->font, weaponNum, ix, iy + h);
+    }
+    //writeText(game->font, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.", 10, iy + h);
+}
+
+void drawWormName(Game *game, Worm *worm) {
+    writeTextWithBackground(game->font, worm->name, worm->obj->x, worm->obj->y - NAME_HEIGHT);
+}
+
+void clearWormName(Game *game, Worm *worm) {
+    int width, height;
+    //Color red = {255, 0, 0};
+    width = stringDisplayWidth(game->font, worm->name);
+    height = stringDisplayHeight(game->font, worm->name);
+
+    int x,y,w,h;
+
+    x = worm->obj->x - 8;
+    y = worm->obj->y - NAME_HEIGHT - height/2 - 8;
+    w = width + 16;
+    h = height + 16;
+
+    drawLevel(game->level, x / 8, y / 8, x + w , y + h);
+    //drawRect(game->screen, x, y, w, h, red);
 }

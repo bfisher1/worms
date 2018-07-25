@@ -14,9 +14,9 @@ level.o : level.c level.h util.h
 
 anim.o : anim.c anim.h graphics.h
 
-game.o : game.c game.h item.h worm.h ./Queue/queue.h util.h text.h
+game.o : game.c game.h item.h worm.h weapon.o ./Queue/queue.h util.h text.h
 
-item.o : item.c item.h weapon.h
+item.o : item.c item.h weapon.h util.h
 
 physObj.o : physObj.c physObj.h level.h util.h
 

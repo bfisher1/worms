@@ -8,7 +8,6 @@
 */
 #ifndef ANIM_H
 #define ANIM_H
-#define ANIMS_NUM 7
 
 #include <SDL/SDL.h>
 #include "graphics.h"
@@ -22,7 +21,18 @@ typedef enum {
     explosion,
     dynamiteAnim,
     healthCrate,
-    weaponCrate
+    weaponCrate,
+    blowTorchStill,
+    blowTorchFire,
+    mineOffAnim,
+    mineBlinkAnim,
+    crossHair,
+    bazookaAnim,
+    missileAnim,
+    pistolAnim,
+    bulletAnim,
+    smokeAnim,
+    invAnim
 } AnimName;
 
 /**
@@ -79,6 +89,6 @@ void freeAnims(Anim **anims, int len);
 
     @return true if the animation has finished, false if not
 */
-bool playAnim(Anim *anim, int x, int y, float angle, int *frame);
+bool playAnim(Anim *anim, int x, int y, float angle, int *frame, bool flippedHoriz);
 
 #endif /* ANIM_H */

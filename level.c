@@ -40,6 +40,8 @@ Level *loadLevel(char *foregroundName, char *backgroundName, char *terrainName, 
     }
     freeImage(terrainImg);
     level->screen = screen;
+    level->xshift = 0;
+    level->yshift = 0;
     return level;
 }
 void drawLevel(Level *level, int x, int y, int xmax, int ymax) {
@@ -76,10 +78,10 @@ void cutCircleInLevel(Level *level, int x, int y, int radius) {
     int xstart, ystart, xmax, ymax, w, h;
     xstart = x - radius;
     ystart = y - radius;
-    if(x < 0){
+    if(xstart < 0){
         xstart = 0;
     }
-    if(y < 0){
+    if(ystart < 0){
         ystart = 0;
     }
     xmax = x + radius;
@@ -99,7 +101,7 @@ void cutCircleInLevel(Level *level, int x, int y, int radius) {
             }
         }
     }
-    drawLevel(level, xstart / 8, ystart / 8, xmax, ymax);
+    drawLevel(level, (xstart - radius/2) / 8, (ystart - radius/2) / 8, xmax + radius / 2, ymax + radius / 2);
 }
 
 void freeLevel(Level *level) {

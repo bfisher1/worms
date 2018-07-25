@@ -13,12 +13,17 @@
 #include "anim.h"
 #include "level.h"
 #include <stdbool.h>
+#define ADD_BACK_NO_ITEMS 0
+#define ADD_BACK_FIRST_ITEM 1
+#define ADD_BACK_SECOND_ITEM 2
+#define ADD_BACK_BOTH_ITEMS 3
 
 typedef enum {
     healthCrateItem,
     weaponCrateItem,
     mineItem,
-    dynamiteItem
+    dynamiteItem,
+    bulletItem
 } ItemName;
 
 /**
@@ -28,7 +33,8 @@ typedef enum {
 typedef struct ItemTag {
     PhysObj *obj;
     Anim *currentAnim;
-    void (*wormCollide)(Worm *worm, void *game);
+    bool (*wormCollide)(void *this, Worm *worm, void *game);
+    int (*itemCollide)(void *this, void *other, void *game);
     int explosionRadius;
     Anim *anim;
     int animFrame;
@@ -68,6 +74,7 @@ typedef struct {
     Item *item;
     clock_t start;
     float delay;
+    bool triggered;
 } Mine;
 
 /**
@@ -78,6 +85,13 @@ typedef struct {
     clock_t start;
     float delay;
 } Dynamite;
+
+typedef struct {
+    Item *item;
+    int startx;
+    int starty;
+    int range;
+} Bullet;
 
 /**
     Creates a health crate with coordinates (x,y) and an explosion
@@ -115,7 +129,7 @@ WeaponCrate *createWeaponCrate(int x, int y, int explosionRadius, Weapon *weapon
     
     @return the created mine
 */
-Mine *createMine(int x, int y, int explosionRadius, clock_t start, float delay);
+Mine *createMine(int x, int y, int explosionRadius, clock_t start, float delay, void *game);
 
 /**
     Frees the health crate.
@@ -131,13 +145,6 @@ void freeHealthCrate(void *healthCrate);
 */
 void freeWeaponCrate(WeaponCrate *weaponCrate);
 
-/**
-    Frees the mine.
-
-    @param mine the mine being freed
-*/
-void freeMine(Mine *mine);
-
 void drawItem(Item *item);
 
 void clearItem(Item *item, Level *level);
@@ -147,5 +154,11 @@ Dynamite *createDynamite(int x, int y, int explosionRadius, float delay, void *g
 void freeDynamite(void *dynamite);
 
 bool readyToExplode(void *explosive);
+
+bool bulletOutOfRange(Bullet *bullet);
+
+Bullet *createBullet(int x, int y, int explosionRadius, void *game, int range, float direction, float velocity);
+
+void freeBullet(void *bullet);
 
 #endif /* ITEM_H */

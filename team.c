@@ -6,7 +6,7 @@ Team *createTeam(char *name, char **names, int teamNumber, Color color, Weapon *
     team->color = color;
     Worm **worms = (Worm **) malloc(sizeof(Worm *) * teamNumber);
     for(int i = 0; i < teamNumber; i++) {
-        worms[i] = createWorm(names[i], randInt(0, level->width / 4), 100, 100, &team->color, NULL);
+        worms[i] = createWorm(names[i], randInt(0, level->width), 0, 100, &team->color, NULL);
     }
     team->worms = worms;
     team->name = name;
@@ -32,4 +32,15 @@ void freeTeam(Team *team) {
         freeWorm(team->worms[i]);
     }
     free(team);
+}
+
+void removeWormFromTeam(Team *team, int index) {
+    if(team->teamNumber <= 0) {
+        return;
+    }
+    freeWorm(team->worms[index]);
+    team->teamNumber--;
+    for(int i = index; i < team->teamNumber; i++) {
+        team->worms[i] = team->worms[i + 1];
+    }
 }

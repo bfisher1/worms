@@ -10,7 +10,12 @@
 #include <time.h>
 #include <math.h>
 
-int randInt(int min, int max){
+int randInt(int min, int max) {
+    static bool start = false;
+    if(!start) {
+        start = true;
+        srand((unsigned) time(0));
+    }
     return rand() % (max - min) + min;
 }
 

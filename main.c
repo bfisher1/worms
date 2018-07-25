@@ -20,8 +20,8 @@
 #include "game.h"
 #include "Queue/queue.h"
 
-#define WIDTH 1000
-#define HEIGHT 800
+#define WIDTH 1920
+#define HEIGHT 696
 #define DEPTH 32
 #define REFRESH_RATE .005
 #define GRAVITY .4 // .8
@@ -31,6 +31,7 @@
 #define JUMP 8.0
 #define MAX_JUMP_VELOCITY 25
 #define TURN_LENGTH 60
+#define INV_SIZE 3
 //add suddent death and water
 
 /**
@@ -67,18 +68,20 @@ int main(int argc, char *argv[])
     */
     Color green = {0, 255, 0};
     Color blue = {0, 0, 255};
-    Level *level = loadLevel("levels/level1_foreground.ppm", "levels/level1_background.ppm", "levels/level3.ppm", NULL);
+    Level *level = loadLevel("levels/dad_level_foreground.ppm", "levels/driveway_background.ppm", "levels/dad_level_level.ppm", NULL);
+    //loadLevel("levels/dad_level_foreground.ppm", "levels/driveway_background.ppm", "levels/dad_level_level.ppm", NULL);
+    //loadLevel("levels/ben_level_foreground.ppm", "levels/driveway_background.ppm", "levels/ben_level_level.ppm", NULL);
     //Worm *worm; // = createWorm("Springy", 202, 111, 100, &green, animBank[wormMove]);
     
-    char *teamOneNames[] = {"Firefox", "BST", "Hidden Markov Model", "Blender", "PuTTY", "Huffman", "Seg fault"};
-    Weapon teamOneWeapons[] = {{dynamite}, {mine}, {grenade}};
+    char *teamOneNames[] = {"Firefox", "BST", "Hidden", "Blender", "PuTTY", "Huffman", "Seg fault"};
+    Weapon *teamOneWeapons = makeWeapons(INV_SIZE, parachute, mine, grenade);
     int weaponNumsOne[] = {1, 0, 3};
-    Team *teamOne = createTeam("Annihilators", teamOneNames, 7, green, teamOneWeapons, weaponNumsOne, 3, level);
+    Team *teamOne = createTeam("Annihilators", teamOneNames, 7, green, teamOneWeapons, weaponNumsOne, INV_SIZE, level);
 
-    char *teamTwoNames[] = {"FSM", "C++", "Python", "IllegalArgumentException", "HTML", "Hash table", "Assembly"};
-    Weapon teamTwoWeapons[] = {{dynamite}, {parachute}, {pistol}};
+    char *teamTwoNames[] = {"FSM", "C++", "Python", "Exception", "HTML", "Hash table", "Assembly"};
+    Weapon *teamTwoWeapons = makeWeapons(INV_SIZE, blowTorch, dynamite, pistol);
     int weaponNumsTwo[] = {2, 8, 1};
-    Team *teamTwo = createTeam("OverClockers", teamTwoNames, 7, blue, teamTwoWeapons, weaponNumsTwo, 3, level);
+    Team *teamTwo = createTeam("OverClockers", teamTwoNames, 7, blue, teamTwoWeapons, weaponNumsTwo, INV_SIZE, level);
 
     //Team *teams[]  = {teamOne, teamTwo};
     Queue *teams = makeQueue();
@@ -106,6 +109,9 @@ int main(int argc, char *argv[])
     level->screen = game->screen;
     drawLevel(game->level, 0, 0, WIDTH, HEIGHT);
     enqueue(game->items, createHealthCrate(426, 376, 60, 100, (void *) game));
+    enqueue(game->items, createHealthCrate(466, 376, 60, 100, (void *) game));
+    enqueue(game->items, createHealthCrate(516, 376, 60, 100, (void *) game));
+    
     //Image *life = loadPPM("levels/level1.ppm");
     
     //Level *level = loadLevel("levels/tiny_foreground.ppm", "levels/tiny_background.ppm", "levels/tiny level.ppm", screen);
@@ -303,6 +309,8 @@ int main(int argc, char *argv[])
         
 	}
     endGame(game);
+    freeWeapons(teamOneWeapons);
+    freeWeapons(teamTwoWeapons);
     /*
     freeImage(redBackground);
     freeLevel(level);

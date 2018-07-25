@@ -88,6 +88,8 @@ void decel(PhysObj *obj, float rate);
 */
 void move(PhysObj *obj, Level *level, float bounce);
 
+void ghostMove(PhysObj *obj);
+
 /**
     Frees an object from memory.
     
@@ -116,5 +118,7 @@ void jump(PhysObj *obj, Level *level, float amount);
 bool isColliding(PhysObj *obj, Level *level, bool *leftCol, bool *rightCol, bool *topCol, bool *bottomCol);
 
 void tilt(PhysObj *obj, Level *level, float amount, float max, SDL_Surface *screen);
+
+bool areObjectsColliding(PhysObj *obj1, PhysObj *obj2);
 
 #endif /* PHYS_OBJ_H */

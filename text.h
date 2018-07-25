@@ -14,6 +14,8 @@ typedef struct {
 Font *loadFont(char *fileName, SDL_Surface *screen, Color background, Color textColor, int size);
 void freeFont(Font *font);
 void writeText(Font *font, char *text, int x, int y);
+void writeTextWithBackground(Font *font, char *text, int x, int y);
 void clearText(Font *font, char *text, int x, int y);
-
+int stringDisplayWidth(Font *font, char *str);
+int stringDisplayHeight(Font *font, char *str);
 #endif /* TEXT_H */

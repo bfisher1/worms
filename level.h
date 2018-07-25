@@ -31,6 +31,8 @@ typedef struct {
     TerrainBlock **terrain;
     int waterLevel;
     SDL_Surface *screen;
+    int xshift;
+    int yshift;
 } Level;
 
 /**

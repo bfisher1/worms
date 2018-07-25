@@ -47,7 +47,23 @@ void writeText(Font *font, char *text, int x, int y) {
         false, 0);
     }
 }
+
+void writeTextWithBackground(Font *font, char *text, int x, int y) {
+    int old = font->backgroundColor.r;
+    font->backgroundColor.r = 0;
+    writeText(font, text, x, y);
+    font->backgroundColor.r = old;
+}
+
 void clearText(Font *font, char *text, int x, int y) {
     
 }
+
+int stringDisplayWidth(Font *font, char *str) {
+    return font->font->width * strlen(str);
+}
+int stringDisplayHeight(Font *font, char *str) {
+    return (font->font->height / CHARS_IN_FONT);
+}
+
 

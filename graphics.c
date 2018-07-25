@@ -141,7 +141,15 @@ Image *loadPPM(char *fileName) {
         fclose(f);
         return NULL;
     }
-    fscanf(f, "P3");
+    fscanf(f, "P3\n");
+    int ch = fgetc(f);
+    if( ch == '#'){
+        while(ch != '\n') {
+            ch = fgetc(f);
+        }
+    } else {
+        ungetc(ch, f);
+    }
     Image *img = (Image *) malloc(sizeof(Image));
     fscanf(f, "%d %d", &img->width, &img->height);
     int colorMax;
@@ -207,10 +215,10 @@ void drawSubImage(Image *img, SDL_Surface *screen, int centerx, int centery, int
     //screen coordinates of the image drawn
     int screenx, screeny;
     
-    for(int x = rx; x < rxmax && x < screen->w; x++) {
-        for(int y = ry; y < rymax && y < screen->h; y++) {
+    for(int x = rx; x < rxmax; x++) {
+        for(int y = ry; y < rymax; y++) {
             framex = x - rx - rwidth / 2.0;
-            framey = y - ry - rwidth / 2.0;
+            framey = y - ry - rheight / 2.0;
 
             rotx = framex - tan(angle / 2.0) * framey;
             roty = framey;

@@ -14,7 +14,7 @@ Stamp *createStamp(Anim *anim, float duration, bool repeat, int x, int y) {
     return stamp;
 }
 void drawStamp(Stamp *stamp, int x, int y) {
-    if(playAnim(stamp->anim, x, y, 0, &stamp->frame)){
+    if(playAnim(stamp->anim, x, y, 0, &stamp->frame, false)){
         stamp->hasFinished = true;
     }
 }
