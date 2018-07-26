@@ -23,6 +23,7 @@ typedef struct {
     Weapon *weapons;
     int *weaponNums;
     int selectedWeapon;
+    int playerIdx;
 } Team;
 
 /**

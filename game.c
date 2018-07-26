@@ -24,7 +24,14 @@
 #define INV_CELLS_HIGH 2
 #define INV_CELLS_WIDE 5
 #define NAME_HEIGHT 60
+#define TIMER_HEIGHT 90
 
+void dropCrates(Game *game, int crateNum);
+void switchTeam(Game *game);
+void switchPlayer(Game *game);
+bool isStill(Game *game);
+float timeLeftInTurn(Game *game);
+void drawTimeLeftInTurn(Game *game);
 void clearWormName(Game *game, Worm *worm);
 void drawWormName(Game *game, Worm *worm);
 
@@ -86,9 +93,11 @@ Game *startGame(Level *level, Queue *teams, int turnLength, float gravity) {
             switchAnim(team->worms[j], game->animBank[wormStill]);
         }
     }
-    game->currentTeam = team;
+    game->currentTeam = dequeue(game->teams);
+    enqueue(game->teams, game->currentTeam);
     game->player = team->worms[0];
     game->lastUpdate = clock();
+    game->turnStart = clock();
     return game;
 }
 
@@ -123,7 +132,6 @@ bool gameLoop(Game *game) {
     static bool firing = false;
     static int mousex, mousey, teamNumber, wormNumber, stampNumber, itemNumber, weaponFrame;
     static int fps = 0;
-    static int playerIdx = 0;
     static float weaponDir = 0.0;
     static float weaponDirTopAngle = 0.0;
     static float weaponForce = 1;
@@ -153,11 +161,9 @@ bool gameLoop(Game *game) {
 
         if(tab) {
             tab = false;
-            playerIdx++;
-            playerIdx %= game->currentTeam->teamNumber;
-            printf("%d\n", playerIdx);
+            switchPlayer(game);
         }
-        game->player = game->currentTeam->worms[playerIdx];
+        game->player = game->currentTeam->worms[game->currentTeam->playerIdx];
 
         isColliding(game->player->obj, game->level, &le, &ri, &to, &bo);
         if(right) {
@@ -352,10 +358,16 @@ bool gameLoop(Game *game) {
                 }
                 move(worm->obj, game->level, WORM_BOUNCE);
                 tilt(worm->obj, game->level, 2 * PI/180.0, 45.0 * PI / 180.0,  game->screen );
+                //DEATH
                 if(worm->health <= 0) {
                     //clearWormName(game, worm);
                     Stamp *smokeStamp = createStamp(game->animBank[smokeAnim], 0, false, worm->obj->x, worm->obj->y);
                     enqueue(game->stamps, smokeStamp);
+                    if(worm == game->player) {
+                        game->currentTeam->playerIdx++;
+                        game->currentTeam->playerIdx %= game->currentTeam->teamNumber;
+                        game->player = game->currentTeam->worms[game->currentTeam->playerIdx];
+                    }
                     removeWormFromTeam(team, j);
                 } else {
                     drawWorm(worm);
@@ -428,6 +440,7 @@ bool gameLoop(Game *game) {
 
         drawWormName(game, game->player);
         drawInventory(game, game->currentTeam);
+        drawTimeLeftInTurn(game);
         drawCrossHair(game, game->player->obj->x, game->player->obj->y, weaponFireDir, weaponForce);
         
         updateScreen(game->screen);
@@ -461,7 +474,15 @@ bool gameLoop(Game *game) {
         clearWormName(game, game->player);
         clearCrossHair(game, game->player->obj->x, game->player->obj->y, weaponFireDir, weaponForce);
         
-       game->lastUpdate = clock(); 
+        if(timeLeftInTurn(game) <= 0) {
+            switchPlayer(game);
+            switchTeam(game);
+            dropCrates(game, randInt(0, 2));
+            game->turnStart = clock();
+        }
+        game->lastUpdate = clock(); 
+
+        printf("%d\n", isStill(game));
     }
     
     return false;
@@ -642,4 +663,78 @@ void clearWormName(Game *game, Worm *worm) {
 
     drawLevel(game->level, x / 8, y / 8, x + w , y + h);
     //drawRect(game->screen, x, y, w, h, red);
+}
+
+float timeLeftInTurn(Game *game) {
+    return game->turnLength - ( (float) (clock() - game->turnStart)) / CLOCKS_PER_SEC;
+}
+
+void drawTimeLeftInTurn(Game *game) {
+    int timeLeft = timeLeftInTurn(game);
+    char timeStr[10];
+    sprintf(timeStr, "%.2d", timeLeft);
+    int width = stringDisplayWidth(game->font, timeStr);
+    writeText(game->font, timeStr, WIDTH / 2 - width / 4, HEIGHT - TIMER_HEIGHT);
+    //randomly drop crate
+}
+
+bool isStill(Game *game) {
+    Team *team;
+    float thresh = 1;
+    bool isStill = true;
+    int wormNumber;
+    Worm *worm;
+    //WORM
+    int teamNumber = queueSize(game->teams);
+    for(int i = 0; i < teamNumber && isStill; i++) {
+        team = dequeue(game->teams);
+        enqueue(game->teams, team);
+        wormNumber = team->teamNumber;
+        for(int j = 0; j < wormNumber; j++) {
+            worm = team->worms[j];
+            //worm is moving
+            if( abs(worm->obj->velocity) >= thresh ) {
+                isStill = false;
+                break;
+            }
+
+        }
+    }
+
+    //ITEM
+    int itemNumber = queueSize(game->items);
+    for(int k = 0; k < itemNumber; k++) {
+        void *subItem = dequeue(game->items);
+        Item *item = ((ItemSubclass *) subItem)->item;
+        enqueue(game->items, subItem);
+        //item is moving
+        if( abs(item->obj->velocity) >= thresh ) {
+            isStill = false;
+            break;
+        }
+        //if there is dynamite it has to explode before the game is calm
+        if(item->name == dynamiteItem) {
+            isStill = false;
+            break;
+        }
+    }
+
+
+    return isStill;
+}
+
+void switchPlayer(Game *game) {
+    game->currentTeam->playerIdx++;
+    game->currentTeam->playerIdx %= game->currentTeam->teamNumber;
+}
+
+void switchTeam(Game *game) {
+    game->currentTeam = dequeue(game->teams);
+    enqueue(game->teams, game->currentTeam);
+}
+
+void dropCrates(Game *game, int crateNum) {
+    for(int i = 0; i < crateNum; i++) {
+        enqueue(game->items, createHealthCrate(randInt(0, game->level->width), 0, 60, 100, (void *) game));
+    }
 }

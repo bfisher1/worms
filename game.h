@@ -42,6 +42,7 @@ typedef struct {
     Team *currentTeam;
     Font *font;
     Queue *stamps;
+    clock_t turnStart;
 } Game;
 
 /**

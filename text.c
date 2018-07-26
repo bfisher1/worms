@@ -1,6 +1,9 @@
 #include "text.h"
-#define CHARS_IN_FONT 37
+#define CHARS_IN_FONT 39
 #define ALPHABET_LEN 26
+#define PERIOD_IDX 36
+#define PLUS_IDX 37
+#define SPACE_IDX 38
 #include <stdbool.h>
 
 
@@ -36,9 +39,11 @@ void writeText(Font *font, char *text, int x, int y) {
         else if('0' <= text[i] && text[i] <= '9') {
             letterIdx = ALPHABET_LEN + text[i] - '0';
         } else if(text[i] == '.') {
-            letterIdx = CHARS_IN_FONT - 1;
+            letterIdx = PERIOD_IDX;
+        } else if(text[i] == '+') {
+            letterIdx = PLUS_IDX;
         } else {
-            letterIdx = CHARS_IN_FONT - 1;
+            letterIdx = SPACE_IDX;
         }
         
         drawSubImage(font->font, font->screen,

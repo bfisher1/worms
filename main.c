@@ -30,7 +30,7 @@
 #define MAX_X_VELOCITY 5.0
 #define JUMP 8.0
 #define MAX_JUMP_VELOCITY 25
-#define TURN_LENGTH 60
+#define TURN_LENGTH 15
 #define INV_SIZE 3
 //add suddent death and water
 
