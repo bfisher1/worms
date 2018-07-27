@@ -7,6 +7,7 @@
 #include "level.h"
 #include "Queue/queue.h"
 #include "item.h"
+#include "util.h"
 #define DYNAMITE_WIDTH 5
 #define DYNAMITE_HEIGHT 20
 #define DYNAMITE_DELAY 3
@@ -194,46 +195,71 @@ void clearCrossHair(void *game, int cx, int cy, float angle, float force) {
     (firex + width), (firey + height) ); 
 }
 
-Weapon *makeWeapons(int len, ...) {
-    Weapon *weapons = (Weapon *) malloc(sizeof(Weapon) * len);
+ArrayList *makeWeapons(int len, ...) {
+    int amount;
+    Weapon *weapon;
+    InvWeapon *invWeapon;
+    ArrayList *weapons = createArrayList(5);
     WeaponName name;
     va_list args;
     va_start(args, len);
-    for(int i = 0; i < len; i++){
+    for(int i = 0; i < len; i++) {
+        invWeapon = (InvWeapon *) malloc(sizeof(InvWeapon));
+        weapon = &invWeapon->weapon;
         name = va_arg(args, WeaponName);
-        weapons[i].name = name;
+        amount = va_arg(args, int);
+        weapon->name = name;
         switch(name) {
             case grenade:
-                weapons[i].fireAtRelease = true;
-                weapons[i].rangedAttack = true;
+                weapon->fireAtRelease = true;
+                weapon->rangedAttack = true;
                 break;
             case mine:
-                weapons[i].fireAtRelease = true;
-                weapons[i].rangedAttack = false;
+                weapon->fireAtRelease = true;
+                weapon->rangedAttack = false;
                 break;
             case dynamite:
-                weapons[i].fireAtRelease = true;
-                weapons[i].rangedAttack = true;
+                weapon->fireAtRelease = true;
+                weapon->rangedAttack = true;
                 break;
             case parachute:
-                weapons[i].fireAtRelease = true;
-                weapons[i].rangedAttack = false;
+                weapon->fireAtRelease = true;
+                weapon->rangedAttack = false;
                 break;
             case pistol:
-                weapons[i].fireAtRelease = true;
-                weapons[i].rangedAttack = false;
+                weapon->fireAtRelease = true;
+                weapon->rangedAttack = false;
                 break;
             case blowTorch:
-                weapons[i].fireAtRelease = false;
-                weapons[i].rangedAttack = false;
+                weapon->fireAtRelease = false;
+                weapon->rangedAttack = false;
                 break;
         }
+        invWeapon->amount = amount;
+        addToArrayListEnd(weapons, (void *) invWeapon);
     }
     va_end(args);
     return weapons;
 }
-void freeWeapons(Weapon *weapons) {
-    free(weapons);
+void freeWeapons(ArrayList *weapons) {
+    int size = arrayListSize(weapons);
+    for(int i = 0; i < size; i++){
+        //free each inv weapon in the list
+        free( (InvWeapon *) getArrayListElement(weapons, i));
+    }
+    freeArrayList(weapons);
+}
+
+//TODO add random weapons
+Weapon *randWeapon(void *game) {
+    int weaponName = randInt(0, WEAPON_NUMBER);
+    Weapon *weapon = NULL;
+    switch(weaponName) {
+        default:
+            createDynamiteWeapon((Game *) game);
+            break;
+    }
+    return weapon;
 }
 
 //void continueWeapon

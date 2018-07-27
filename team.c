@@ -1,7 +1,7 @@
 #include "team.h"
 #include "util.h"
 
-Team *createTeam(char *name, char **names, int teamNumber, Color color, Weapon *weapons, int *weaponNums, int weaponNumber, Level *level) {
+Team *createTeam(char *name, char **names, int teamNumber, Color color, ArrayList *weapons,  Level *level) {
     Team *team = (Team *) malloc(sizeof(Team));
     team->color = color;
     Worm **worms = (Worm **) malloc(sizeof(Worm *) * teamNumber);
@@ -13,8 +13,6 @@ Team *createTeam(char *name, char **names, int teamNumber, Color color, Weapon *
     team->teamNumber = teamNumber;
     
     team->weapons = weapons;
-    team->weaponNums = weaponNums;
-    team->weaponNumber = weaponNumber;
     team->selectedWeapon = 0;
     team->playerIdx = 0;
     return team;

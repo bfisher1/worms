@@ -1,0 +1,9 @@
+Run commands:
+
+gcc -DTEST_ARRAY_LIST -fprofile-arcs -ftest-coverage -Wall -std=c99 -g ArrayList.c -o ArrayList
+
+./ArrayList
+
+gcov ArrayList.c.gcov 
+
+Open: ArrayList.c.gcov

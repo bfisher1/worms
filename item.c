@@ -83,7 +83,13 @@ HealthCrate *createHealthCrate(int x, int y, int explosionRadius, int healAmount
     return crate;
 }
 
-WeaponCrate *createWeaponCrate(int x, int y, int explosionRadius, Weapon *weapon, bool isTrap);
+WeaponCrate *createWeaponCrate(int x, int y, int explosionRadius, Weapon *weapon, bool isTrap, void *game) {
+    WeaponCrate *crate = (WeaponCrate *) malloc(sizeof(WeaponCrate));
+    crate->item = createItem(weaponCrateItem, x, y, explosionRadius, weaponCrateWormCollide, ((Game *) game)->animBank[weaponCrate], freeWeaponCrate, noCollideItem );
+    crate->weapon = weapon;
+    crate->isTrap = isTrap;
+    return crate;
+}
 
 void freeMine(void *mine) {
     Mine *m = (Mine *) mine;
@@ -105,7 +111,12 @@ void freeHealthCrate(void *healthCrate) {
     free(h);
 }
 
-void freeWeaponCrate(WeaponCrate *weaponCrate);
+void freeWeaponCrate(void *weaponCrate) {
+    WeaponCrate *w = (WeaponCrate *) weaponCrate;
+    freeItem(w->item);
+    freeWeapon(w->weapon);
+    free(w);
+}
 
 
 

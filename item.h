@@ -117,7 +117,7 @@ HealthCrate *createHealthCrate(int x, int y, int explosionRadius, int healAmount
     
     @return the created weapon crate
 */
-WeaponCrate *createWeaponCrate(int x, int y, int explosionRadius, Weapon *weapon, bool isTrap);
+WeaponCrate *createWeaponCrate(int x, int y, int explosionRadius, Weapon *weapon, bool isTrap, void *game);
 
 /**
     Creates a mine at (x,y) with the given explosion radius.
@@ -143,7 +143,7 @@ void freeHealthCrate(void *healthCrate);
 
     @param weaponCrate the crate being freed
 */
-void freeWeaponCrate(WeaponCrate *weaponCrate);
+void freeWeaponCrate(void *weaponCrate);
 
 void drawItem(Item *item);
 

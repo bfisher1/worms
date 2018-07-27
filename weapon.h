@@ -8,6 +8,8 @@
 #define WEAPON_H
 #include <stdbool.h>
 #include <stdarg.h>
+#define WEAPON_NUMBER 6 
+#include "List/ArrayList.h"
 
 /**
     Enumeration for the names of weapons.
@@ -33,6 +35,11 @@ typedef struct WeaponTag {
     void (*activateWeapon)(void *game, int x, int y, float velocity, float orientation);
 } Weapon;
 
+typedef struct {
+    Weapon weapon;
+    int amount;
+} InvWeapon;
+
 Weapon *createDynamiteWeapon();
 Weapon *createMineWeapon();
 Weapon *createPistolWeapon();
@@ -47,7 +54,7 @@ void drawCrossHair(void *game, int cx, int cy, float angle, float force);
 
 void clearCrossHair(void *game, int cx, int cy, float angle, float force);
 
-Weapon *makeWeapons(int len, ...);
-void freeWeapons(Weapon *weapons);
-
+ArrayList *makeWeapons(int len, ...);
+void freeWeapons(ArrayList *weapons);
+Weapon *randWeapon(void *game);
 #endif /* WEAPON_H */

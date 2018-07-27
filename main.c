@@ -18,7 +18,9 @@
 #include "weapon.h"
 #include "team.h"
 #include "game.h"
+#include "List/ArrayList.h" 
 #include "Queue/queue.h"
+
 
 #define WIDTH 1920
 #define HEIGHT 696
@@ -30,8 +32,9 @@
 #define MAX_X_VELOCITY 5.0
 #define JUMP 8.0
 #define MAX_JUMP_VELOCITY 25
-#define TURN_LENGTH 15
 #define INV_SIZE 3
+#define TURN_LENGTH 15
+
 //add suddent death and water
 
 /**
@@ -74,14 +77,12 @@ int main(int argc, char *argv[])
     //Worm *worm; // = createWorm("Springy", 202, 111, 100, &green, animBank[wormMove]);
     
     char *teamOneNames[] = {"Firefox", "BST", "Hidden", "Blender", "PuTTY", "Huffman", "Seg fault"};
-    Weapon *teamOneWeapons = makeWeapons(INV_SIZE, parachute, mine, grenade);
-    int weaponNumsOne[] = {1, 0, 3};
-    Team *teamOne = createTeam("Annihilators", teamOneNames, 7, green, teamOneWeapons, weaponNumsOne, INV_SIZE, level);
+    ArrayList *teamOneWeapons = makeWeapons(INV_SIZE, parachute, 1, mine, 0, grenade, 3);
+    Team *teamOne = createTeam("Annihilators", teamOneNames, 7, green, teamOneWeapons, level);
 
     char *teamTwoNames[] = {"FSM", "C++", "Python", "Exception", "HTML", "Hash table", "Assembly"};
-    Weapon *teamTwoWeapons = makeWeapons(INV_SIZE, blowTorch, dynamite, pistol);
-    int weaponNumsTwo[] = {2, 8, 1};
-    Team *teamTwo = createTeam("OverClockers", teamTwoNames, 7, blue, teamTwoWeapons, weaponNumsTwo, INV_SIZE, level);
+    ArrayList *teamTwoWeapons = makeWeapons(INV_SIZE, blowTorch, 20, dynamite, 8, pistol, 6);
+    Team *teamTwo = createTeam("OverClockers", teamTwoNames, 7, blue, teamTwoWeapons, level);
 
     //Team *teams[]  = {teamOne, teamTwo};
     Queue *teams = makeQueue();

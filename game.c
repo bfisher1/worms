@@ -3,6 +3,7 @@
 #include "util.h"
 #include <math.h>
 #include "stamp.h"
+#include "List/ArrayList.h"
 #define WIDTH 1920
 #define HEIGHT 696
 #define DEPTH 32
@@ -126,6 +127,7 @@ void endGame(Game *game) {
     free(game);
 }
 
+//NEED TO ADD WORM MAX DIST
 bool gameLoop(Game *game) {
     static SDL_Event event;
     static bool left, right, up, down, space, tab, enter, backspace, esc, one, two, three, le, ri, to, bo, anyCol;
@@ -157,7 +159,8 @@ bool gameLoop(Game *game) {
     
     if( ( (float) (clock() - game->lastUpdate)) / CLOCKS_PER_SEC >= REFRESH_RATE ) {
         fps++;
-        currentWeapon = &game->currentTeam->weapons[game->currentTeam->selectedWeapon];
+        //the current team's weapon
+        currentWeapon = &( (InvWeapon *) getArrayListElement(game->currentTeam->weapons, game->currentTeam->selectedWeapon))->weapon;
 
         if(tab) {
             tab = false;
@@ -252,11 +255,11 @@ bool gameLoop(Game *game) {
             }
             
             if(!currentWeapon->fireAtRelease || (currentWeapon->fireAtRelease && !space)) {
-                fireWeapon(game->currentTeam->weapons[game->currentTeam->selectedWeapon].name,
+                fireWeapon(currentWeapon->name,
                            (void *) game, game->player->obj->x, game->player->obj->y,
                            weaponFireDir, weaponForce * WEAPON_FORCE_VEL_RATIO);
                 firing = false;
-                game->currentTeam->weaponNums[game->currentTeam->selectedWeapon]--;
+                ( (InvWeapon *) getArrayListElement(team->weapons, game->currentTeam->selectedWeapon))->amount--;
             }
         } else {
             weaponForce = WEAPON_FORCE_NON_RANGED;
@@ -434,7 +437,7 @@ bool gameLoop(Game *game) {
             }
         }
 
-        drawWeapon(game->currentTeam->weapons[game->currentTeam->selectedWeapon].name,
+        drawWeapon(currentWeapon->name,
                    game->player->obj->x, game->player->obj->y,
                    &weaponFrame, (void *) game, space, game->player->facingRight, weaponDir);
 
@@ -619,7 +622,9 @@ void explodeWorms(Queue *teams, Game *game, int x, int y, int radius, float maxV
 }
 
 void drawInventory(Game *game, Team *team) {
-    int cx, cy, f, w, h, aw, ah, ix, iy;
+    int cx, cy, f, w, h, aw, ah, ix, iy, weaponNumber, amount;
+    WeaponName name;
+    InvWeapon *invWeapon;
     f = 0;
     char weaponNum[10];
     //width and height of inventory anim
@@ -632,13 +637,17 @@ void drawInventory(Game *game, Team *team) {
     w =  aw/ INV_CELLS_WIDE;
     h = ah / INV_CELLS_HIGH;
     playAnim(game->animBank[invAnim], cx, cy, 0, &f, false);
-    for(int i = 0; i < team->weaponNumber; i++){
+    weaponNumber = arrayListSize(team->weapons);
+    for(int i = 0; i < weaponNumber; i++){
         //coordinates for the cell
         ix = cx - aw/2 + w/2 + i * w;
         iy = cy - h/2;
         f = 0;
-        drawWeapon(team->weapons[i].name, ix, iy, &f, game, false, false, 0);
-        sprintf(weaponNum, "%d", team->weaponNums[i]);
+        invWeapon = (InvWeapon *) getArrayListElement(team->weapons, i);
+        name = invWeapon->weapon.name;
+        amount = invWeapon->amount;
+        drawWeapon(name, ix, iy, &f, game, false, false, 0);
+        sprintf(weaponNum, "%d", amount);
         writeText(game->font, weaponNum, ix, iy + h);
     }
     //writeText(game->font, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.", 10, iy + h);
@@ -736,5 +745,6 @@ void switchTeam(Game *game) {
 void dropCrates(Game *game, int crateNum) {
     for(int i = 0; i < crateNum; i++) {
         enqueue(game->items, createHealthCrate(randInt(0, game->level->width), 0, 60, 100, (void *) game));
+        enqueue(game->items, createWeaponCrate(randInt(0, game->level->width), 0, 60, randWeapon((void *) game), randInt(0, 1), (void *) game));
     }
 }

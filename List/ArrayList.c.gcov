@@ -1,0 +1,190 @@
+        -:    0:Source:ArrayList.c
+        -:    0:Graph:ArrayList.gcno
+        -:    0:Data:ArrayList.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:#include "ArrayList.h"
+        -:    2:#include <stdlib.h>
+        -:    3:
+        1:    4:ArrayList *createArrayList(int initialCapacity) {
+        1:    5:    ArrayList *list = (ArrayList *) malloc(sizeof(ArrayList));
+        1:    6:    list->size = 0;
+        1:    7:    list->capacity = initialCapacity;
+        1:    8:    list->elements = (void **) malloc(sizeof(void *) * list->capacity);
+        1:    9:    return list;
+        -:   10:}
+        -:   11:
+        1:   12:void freeArrayList(ArrayList *list) {
+        1:   13:    free(list->elements);
+        1:   14:    free(list);
+        1:   15:}
+        -:   16:
+        2:   17:void resizeArrayList(ArrayList *list) {
+        2:   18:    list->capacity *= 2;
+        2:   19:    void **newElements = (void **) malloc(sizeof(void *) * list->capacity);
+        8:   20:    for(int i = 0; i < list->size; i++) {
+        6:   21:        newElements[i] = list->elements[i];
+        -:   22:    }
+        2:   23:    free(list->elements);
+        2:   24:    list->elements = newElements;
+        2:   25:}
+        -:   26:
+        3:   27:void addToArrayListAtIndex(ArrayList *list, int idx, void *element) {
+        3:   28:    if(list->size >= list->capacity) {
+        2:   29:        resizeArrayList(list);
+        -:   30:    }
+        9:   31:    for(int i = list->size; i > idx; i--) {
+        6:   32:        list->elements[i] = list->elements[i - 1];
+        -:   33:    }
+        3:   34:    list->elements[idx] = element;
+        3:   35:    list->size++;
+        3:   36:}
+        -:   37:
+        2:   38:void addToArrayListEnd(ArrayList *list, void *element) {
+        2:   39:    if(list->size >= list->capacity) {
+    #####:   40:        resizeArrayList(list);
+        -:   41:    }
+        2:   42:    list->elements[list->size++] = element;
+        2:   43:}
+        -:   44:
+        -:   45://return element
+        2:   46:void *removeFromArrayListAtIndex(ArrayList *list, int idx) {
+        2:   47:    if(idx < 0 || idx >= list->size) {
+    #####:   48:        return NULL;
+        -:   49:    }
+        2:   50:    void *removed = list->elements[idx];
+        7:   51:    for(int i = idx; i < list->size; i++) {
+        5:   52:        list->elements[i] = list->elements[i + 1];
+        -:   53:    }
+        2:   54:    list->size--;
+        2:   55:    return removed;
+        -:   56:}
+        -:   57:
+        2:   58:bool removeElementFromArrayList(ArrayList *list, void *element) {
+        8:   59:    for(int i = 0; i < list->size; i++) {
+        7:   60:        if(list->elements[i] == element) {
+        1:   61:            removeFromArrayListAtIndex(list, i);
+        1:   62:            return true;
+        -:   63:        }
+        -:   64:    }
+        1:   65:    return false;
+        -:   66:}
+        -:   67:
+        -:   68://return old element
+        1:   69:void *setArrayListElement(ArrayList *list, int idx, void *element) {
+        1:   70:    void *old = list->elements[idx];
+        1:   71:    list->elements[idx] = element;
+        1:   72:    return old;
+        -:   73:}
+        -:   74:
+       24:   75:void *getArrayListElement(ArrayList *list, int idx) {
+       24:   76:    if(0 <= idx && idx < list->size) {
+       23:   77:        return list->elements[idx];
+        -:   78:    }
+        1:   79:    return NULL;
+        -:   80:}
+        -:   81:
+        6:   82:int arrayListSize(ArrayList *list) {
+        6:   83:    return list->size;
+        -:   84:}
+        -:   85:
+        -:   86:#ifdef TEST_ARRAY_LIST
+        -:   87:#include <assert.h>
+        1:   88:int main(){
+        1:   89:    ArrayList *list = createArrayList(2);
+        1:   90:    assert(2 == list->capacity);
+        1:   91:    assert(0 == list->size);
+        -:   92:    
+        -:   93:    int *a, *b, *c;
+        -:   94:    double *d, *e, *f;
+        -:   95:    char *x, *y;
+        -:   96:
+        1:   97:    a = (int *) malloc(sizeof(int));
+        1:   98:    b = (int *) malloc(sizeof(int));
+        1:   99:    c = (int *) malloc(sizeof(int));
+        -:  100:
+        1:  101:    d = (double *) malloc(sizeof(double));
+        1:  102:    e = (double *) malloc(sizeof(double));
+        1:  103:    f = (double *) malloc(sizeof(double));
+        -:  104:
+        1:  105:    x = (char *) malloc(sizeof(char));
+        1:  106:    y = (char *) malloc(sizeof(char));
+        -:  107:    
+        -:  108:
+        1:  109:    *a = 1;
+        1:  110:    *b = 2;
+        1:  111:    *c = 3;
+        -:  112:
+        1:  113:    *d = 4.0;
+        1:  114:    *e = 5.0;
+        1:  115:    *f = 6.0;
+        -:  116:
+        1:  117:    *x = 'a';
+        1:  118:    *y = 'b';
+        -:  119:
+        1:  120:    addToArrayListEnd(list, (void *) a);
+        1:  121:    assert(2 == list->capacity);
+        1:  122:    assert(1 == list->size);
+        1:  123:    assert(1 == *( (int *) getArrayListElement(list, 0)));
+        -:  124:
+        1:  125:    addToArrayListEnd(list, (void *) d);
+        1:  126:    assert(2 == list->capacity);
+        1:  127:    assert(2 == list->size);
+        1:  128:    assert(1 == *( (int *) getArrayListElement(list, 0)));
+        1:  129:    assert(4 == (int) *( (double *) getArrayListElement(list, 1)));
+        -:  130:
+        1:  131:    addToArrayListAtIndex(list, 1, (void *) x);
+        1:  132:    assert(4 == list->capacity);
+        1:  133:    assert(3 == arrayListSize(list));
+        1:  134:    assert(1 == *( (int *) getArrayListElement(list, 0)));
+        1:  135:    assert('a' == *( (char *) getArrayListElement(list, 1)));
+        1:  136:    assert(4 == (int) *( (double *) getArrayListElement(list, 2)));
+        -:  137:
+        1:  138:    addToArrayListAtIndex(list, 0, (void *) b);
+        1:  139:    assert(4 == arrayListSize(list));
+        1:  140:    assert(2 == *( (int *) getArrayListElement(list, 0)));
+        1:  141:    assert(1 == *( (int *) getArrayListElement(list, 1)));
+        1:  142:    assert('a' == *( (char *) getArrayListElement(list, 2)));
+        1:  143:    assert(4 == (int) *( (double *) getArrayListElement(list, 3)));
+        -:  144:
+        1:  145:    addToArrayListAtIndex(list, 2, (void *) e);
+        1:  146:    assert(8 == list->capacity);
+        1:  147:    assert(5 == arrayListSize(list));
+        1:  148:    assert(2 == *( (int *) getArrayListElement(list, 0)));
+        1:  149:    assert(1 == *( (int *) getArrayListElement(list, 1)));
+        1:  150:    assert(5 == (int) *( (double *) getArrayListElement(list, 2)));
+        1:  151:    assert('a' == *( (char *) getArrayListElement(list, 3)));
+        1:  152:    assert(4 == (int) *( (double *) getArrayListElement(list, 4)));
+        -:  153:
+        1:  154:    assert(getArrayListElement(list, -1) == NULL);
+        -:  155:
+        1:  156:    setArrayListElement(list, 2, f);
+        1:  157:    assert(5 == arrayListSize(list));
+        1:  158:    assert(6 == (int) *( (double *) getArrayListElement(list, 2)));
+        -:  159:
+        1:  160:    assert(1 == *( (int *) removeFromArrayListAtIndex(list, 1)));
+        1:  161:    assert(4 == arrayListSize(list));
+        1:  162:    assert(2 == *( (int *) getArrayListElement(list, 0)));
+        1:  163:    assert(6 == (int) *( (double *) getArrayListElement(list, 1)));
+        1:  164:    assert('a' == *( (char *) getArrayListElement(list, 2)));
+        1:  165:    assert(4 == (int) *( (double *) getArrayListElement(list, 3)));
+        -:  166:
+        1:  167:    assert(removeElementFromArrayList(list, d));
+        1:  168:    assert(3 == arrayListSize(list));
+        1:  169:    assert(2 == *( (int *) getArrayListElement(list, 0)));
+        1:  170:    assert(6 == (int) *( (double *) getArrayListElement(list, 1)));
+        1:  171:    assert('a' == *( (char *) getArrayListElement(list, 2)));
+        -:  172:
+        1:  173:    assert(!removeElementFromArrayList(list, c));
+        -:  174:
+        1:  175:    freeArrayList(list);
+        1:  176:    free(a);
+        1:  177:    free(b);
+        1:  178:    free(d);
+        1:  179:    free(e);
+        1:  180:    free(f);
+        1:  181:    free(x);
+        1:  182:    free(y);
+        1:  183:    return 0;
+        -:  184:}
+        -:  185:#endif

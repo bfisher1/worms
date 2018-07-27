@@ -9,6 +9,7 @@
 #include "worm.h"
 #include "graphics.h"
 #include "weapon.h"
+#include "List/ArrayList.h"
 
 /**
     Structure of a team. Each team has a name, color, a collection
@@ -19,9 +20,7 @@ typedef struct {
     Color color;
     int teamNumber;
     Worm **worms;
-    int weaponNumber;
-    Weapon *weapons;
-    int *weaponNums;
+    ArrayList *weapons;
     int selectedWeapon;
     int playerIdx;
 } Team;
@@ -41,7 +40,7 @@ typedef struct {
 
     @return the team that was created
 */
-Team *createTeam(char *name, char **names, int teamNumber, Color color, Weapon *weapons, int *weaponNums, int weaponNumber, Level *level);
+Team *createTeam(char *name, char **names, int teamNumber, Color color, ArrayList *weapons, Level *level);
 
 /**
     Calculates the team's overall health.
