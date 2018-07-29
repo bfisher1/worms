@@ -33,7 +33,8 @@ typedef enum {
     bulletAnim,
     smokeAnim,
     invAnim,
-    selectedCell
+    selectedCell,
+    bigExplosion
 } AnimName;
 
 /**

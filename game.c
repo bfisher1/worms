@@ -20,15 +20,21 @@
 #define WEAPON_FORCE_DELTA 4
 #define WEAPON_FORCE_NON_RANGED 70
 #define WEAPON_FORCE_VEL_RATIO .1
-#define WORM_BOUNCE 0
-#define ITEM_BOUNCE .6
+#define WORM_BOUNCE 0.0
+#define ITEM_BOUNCE 0.3
 #define INV_CELLS_HIGH 2
 #define INV_CELLS_WIDE 5
 #define NAME_HEIGHT 60
 #define TIMER_HEIGHT 90
 #define WEAPON_AMOUNT_MAX 5
 #define START_TEAM_IDX 2
+#define BIG_EXPLOSION_SIZE 50
+#define EXPLOSION_DAMAGE_SCALE 2.5
+#define DEATH_BORDER 50
+#define DEATH_EXPLOSION 30
+#define TURN_DELAY 1
 
+bool wormOffGrid(Worm *worm);
 void setGameSelectedWeapon(Game *game, int weaponIdx);
 void dropCrates(Game *game, int crateNum);
 void switchTeam(Game *game);
@@ -42,7 +48,9 @@ void drawWormName(Game *game, Worm *worm);
 void explodeWorms(Queue *teams, Game *game, int x, int y, int radius, float maxVelocity);
 
 void drawInventory(Game *game, Team *team);
-
+void clearKeys(bool *left, bool *right, bool *up,
+              bool *down, bool *space, bool *tab, bool *esc, bool *enter,
+              bool *backspace, bool *one, bool *two, bool *three, bool *four, bool *five);
 void readKeys(SDL_Event *event, bool *left, bool *right, bool *up,
               bool *down, bool *space, bool *tab, bool *esc, bool *enter,
               bool *backspace, bool *one, bool *two, bool *three, bool *four, bool *five);
@@ -105,6 +113,8 @@ Game *startGame(Level *level, Queue *teams, int turnLength, float gravity) {
     game->player = team->worms[0];
     game->lastUpdate = clock();
     game->turnStart = clock();
+    game->waitForTurn = true;
+    game->lastTurn = clock();
     return game;
 }
 
@@ -149,9 +159,19 @@ bool gameLoop(Game *game) {
     static Weapon *currentWeapon;
     static clock_t lastSec = 0;
     readKeys(&event, &left, &right, &up, &down, &space, &tab, &esc, &enter, &backspace, &one, &two, &three, &four, &five);
+    
     if(esc) {
         return true;
     }
+
+    if(game->waitForTurn) {
+        clearKeys(&left, &right, &up, &down, &space, &tab, &esc, &enter, &backspace, &one, &two, &three, &four, &five);
+        if(( (float) (clock() - game->lastTurn)) / CLOCKS_PER_SEC >= TURN_DELAY){
+            game->waitForTurn = false;
+            game->turnStart = clock();
+        }
+    }
+
     SDL_GetMouseState(&mousex, &mousey);
 
     teamNumber = queueSize(game->teams);
@@ -376,14 +396,21 @@ bool gameLoop(Game *game) {
                 move(worm->obj, game->level, WORM_BOUNCE);
                 tilt(worm->obj, game->level, 2 * PI/180.0, 45.0 * PI / 180.0,  game->screen );
                 //DEATH
-                if(worm->health <= 0) {
+                if(worm->health <= 0 || wormOffGrid(worm)) {
+                    char msg[100];
+                    strcpy(msg, worm->name);
+                    strcat(msg, " has died.");
+                    writeText(game->font, msg, WIDTH / 2, HEIGHT / 2);
                     //clearWormName(game, worm);
                     Stamp *smokeStamp = createStamp(game->animBank[smokeAnim], 0, false, worm->obj->x, worm->obj->y);
+                    createExplosion(game, worm->obj->x, worm->obj->y, DEATH_EXPLOSION);
                     enqueue(game->stamps, smokeStamp);
+                    //if player has died, switch the team
                     if(worm == game->player) {
-                        game->currentTeam->playerIdx++;
-                        game->currentTeam->playerIdx %= game->currentTeam->teamNumber;
-                        game->player = game->currentTeam->worms[game->currentTeam->playerIdx];
+                        switchPlayer(game);
+                        switchTeam(game);
+                        return false;
+                        //switchPlayer(game);
                     }
                     removeWormFromTeam(team, j);
                 } else {
@@ -505,7 +532,6 @@ bool gameLoop(Game *game) {
             switchPlayer(game);
             switchTeam(game);
             dropCrates(game, randInt(0, 2));
-            game->turnStart = clock();
         }
         game->lastUpdate = clock(); 
 
@@ -637,7 +663,7 @@ void explodeWorms(Queue *teams, Game *game, int x, int y, int radius, float maxV
             distance = dist(x, y, worm->obj->x, worm->obj->y);
             if(distance <= radius) {
                 strength = (radius - distance) / radius;
-                hurtWorm(worm, 25 * strength);
+                hurtWorm(worm, 25 * strength * EXPLOSION_DAMAGE_SCALE);
                 newVelocity = strength * maxVelocity;
                 //newVelocity = maxVelocity;
                 //if worm is too close, direction might not be accurate.
@@ -781,6 +807,9 @@ void switchPlayer(Game *game) {
 void switchTeam(Game *game) {
     game->currentTeam = dequeue(game->teams);
     enqueue(game->teams, game->currentTeam);
+    game->turnStart = clock();
+    game->lastTurn = clock();
+    game->waitForTurn = true;
 }
 
 void dropCrates(Game *game, int crateNum) {
@@ -814,8 +843,37 @@ void setGameSelectedWeapon(Game *game, int weaponIdx) {
 }
 
 void createExplosion(Game *game, int x, int y, int r) {
+    printf("Explosion: %d\n", r);
     cutCircleInLevel(game->level, x, y, r);
-    Stamp *explosionStamp = createStamp(game->animBank[explosion], 0, false, x, y);
+    Stamp *explosionStamp;
+    if(r <= BIG_EXPLOSION_SIZE) {
+        explosionStamp = createStamp(game->animBank[explosion], 0, false, x, y);
+    } else {
+        explosionStamp = createStamp(game->animBank[bigExplosion], 0, false, x, y);
+    }
     enqueue(game->stamps, explosionStamp);
     explodeWorms(game->teams, game, x, y, r, MAX_JUMP_VELOCITY );
 }
+
+bool wormOffGrid(Worm *worm) {
+    return worm->obj->x < -DEATH_BORDER || worm->obj->x > WIDTH + DEATH_BORDER || worm->obj->y > HEIGHT;
+}
+
+void clearKeys(bool *left, bool *right, bool *up,
+              bool *down, bool *space, bool *tab, bool *esc, bool *enter,
+              bool *backspace, bool *one, bool *two, bool *three, bool *four, bool *five) {
+                  *left = false;
+                  *right = false;
+                  *up = false;
+                  *down = false;
+                  *space = false;
+                  *tab = false;
+                  *esc = false;
+                  *enter = false;
+                  *backspace = false;
+                  *one = false;
+                  *two = false;
+                  *three = false;
+                  *four = false;
+                  *five = false;
+              }

@@ -1,6 +1,6 @@
 #include "anim.h"
 #include <stdlib.h>
-#define ANIMS_NUM 19
+#define ANIMS_NUM 20
 
 /**
     Loads an animation from the given file. Width and height pertain
@@ -71,7 +71,7 @@ Anim **loadAnims(SDL_Surface *screen, int *len) {
     anims[smokeAnim] = loadAnim("anims/smoke.ppm", 10, 40, 40, 12, screen, &blue);
     anims[invAnim] = loadAnim("anims/inventory.ppm", 1, 188, 77, 1, screen, &blue);
     anims[selectedCell] = loadAnim("anims/selected cell.ppm", 1, 34, 34, 1, screen, &blue);
-    
+    anims[bigExplosion] = loadAnim("anims/big explosion.ppm", 7, 152, 156, 15, screen, &red);
     //dynamite 25 fps
     //explosion 20 fps
     for(int i = 0; i < *len; i++){

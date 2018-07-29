@@ -43,6 +43,8 @@ typedef struct {
     Font *font;
     Queue *stamps;
     clock_t turnStart;
+    clock_t lastTurn;
+    bool waitForTurn;
 } Game;
 
 /**

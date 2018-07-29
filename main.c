@@ -33,7 +33,7 @@
 #define JUMP 8.0
 #define MAX_JUMP_VELOCITY 25
 #define INV_SIZE 4
-#define TURN_LENGTH 95
+#define TURN_LENGTH 60
 
 //add suddent death and water
 
@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
     Color blue = {0, 0, 255};
     //Level *level = loadLevel("levels/super tiny foreground.ppm", "levels/super tiny background.ppm", "levels/super tiny level.ppm", NULL);
     //Level *level = loadLevel("levels/dad_level_foreground.ppm", "levels/driveway_background.ppm", "levels/dad_level_level.ppm", NULL);
-    Level *level = loadLevel("levels/ben_level_foreground.ppm", "levels/driveway_background.ppm", "levels/ben_level_level.ppm", NULL);
+    //Level *level = loadLevel("levels/ben_level_foreground.ppm", "levels/driveway_background.ppm", "levels/ben_level_level.ppm", NULL);
     //Worm *worm; // = createWorm("Springy", 202, 111, 100, &green, animBank[wormMove]);
-    
+    Level *level = loadLevel("levels/cartoon level foreground.ppm", "levels/cartoon level background.ppm", "levels/cartoon level.ppm", NULL);
     char *teamOneNames[] = {"Firefox", "BST", "Hidden", "Blender", "PuTTY", "Huffman", "Seg fault"};
     ArrayList *teamOneWeapons = makeWeapons(INV_SIZE, parachute, 1, mine, 0, grenade, 3, pistol, 2);
     Team *teamOne = createTeam("Annihilators", teamOneNames, 7, green, teamOneWeapons, level);

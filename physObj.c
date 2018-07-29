@@ -3,7 +3,7 @@
 #include "util.h"
 /** Fraction of the box's side that is read to determine a collision. */
 #define BORDER_FRACTION 5.0
-
+#define MOVE_TOO_FAR 100
 typedef enum {
     noCollision,
     leftCollision,
@@ -206,15 +206,18 @@ void ghostMove(PhysObj *obj) {
 }
 
 void move(PhysObj *obj, Level *level, float bounce) {
-    //int xprev, yprev;
+    int startx, starty, startv;
     float vx, vy;
     bool leftCol, rightCol, topCol, bottomCol;
     //xprev = obj->x;
     //yprev = obj->y;
+    startx = obj->x;
+    starty = obj->y;
     vx = obj->velocity * cos(obj->direction);
     vy = obj->velocity * sin(obj->direction);
     obj->x += vx;
     obj->y += vy;
+    startv = obj->velocity;
     /*
     if(isColliding(obj, level, &leftCol, &rightCol, &topCol, &bottomCol)) {
         moveToNearestOpenLocation(obj, level);
@@ -232,14 +235,15 @@ void move(PhysObj *obj, Level *level, float bounce) {
             return;
         }
         int de = 0;
+        int moved = 0;
         if(topCol && !bottomCol) {
             obj->velocity = dist(0, 0, vx, bounce * vy);
             obj->direction = atan2(abs(vy), vx);
-            bool moved = false;
+            
             while(topCol) {
                 obj->y-= 1;
                 isColliding(obj, level, &leftCol, &rightCol, &topCol, &bottomCol);
-                moved = true;
+                moved++;
             } 
             if(moved){
                 obj->y++;
@@ -253,17 +257,17 @@ void move(PhysObj *obj, Level *level, float bounce) {
             while(bottomCol) {
                 obj->y+= 1;
                 isColliding(obj, level, &leftCol, &rightCol, &topCol, &bottomCol);
+                moved++;
             } 
         }
         if(leftCol) {
             obj->velocity = dist(0, 0, bounce * vx, vy);
             obj->direction = atan2(vy, abs(vx));
-            bool moved = false;
             while(leftCol) {
                 //printf("MOVING RIGHT>>> x %d y %d \n", (int) obj->x, (int) obj->y);
                 obj->x += 1;
                 isColliding(obj, level, &leftCol, &rightCol, &topCol, &bottomCol);
-                moved = true;
+                moved++;
             } 
             if(moved){
                 obj->x--;
@@ -276,15 +280,22 @@ void move(PhysObj *obj, Level *level, float bounce) {
             while(rightCol) {
                 obj->x-= 1;
                 isColliding(obj, level, &leftCol, &rightCol, &topCol, &bottomCol);
-                moved = true;
+                moved++;
             } 
             if(moved){
                 obj->x++;
             }
         }
+        if(moved >= MOVE_TOO_FAR) {
+            obj->x = startx;
+            obj->y = starty;
+            obj->velocity = startv / 2;
+        } else {
+            obj->direction += PI;
+            obj->velocity *= bounce;
+        }
         
-        obj->direction += PI;
-        obj->velocity *= bounce;
+        
     }
 }
 #include <SDL/SDL.h>
