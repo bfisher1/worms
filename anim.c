@@ -1,6 +1,6 @@
 #include "anim.h"
 #include <stdlib.h>
-#define ANIMS_NUM 18
+#define ANIMS_NUM 19
 
 /**
     Loads an animation from the given file. Width and height pertain
@@ -30,9 +30,7 @@ Anim *loadAnim(char *fileName, int frames, int width, int height, float fps, SDL
     anim->fps = fps;
     anim->flippedHoriz = false;
     anim->repeat = true;
-    anim->lastPlayed = clock();
     anim->background = *background;
-    anim->currentFrame = 0;
     anim->width = anim->spriteSheet->width;
     anim->height = anim->spriteSheet->height / anim->frames;
     return anim;
@@ -72,6 +70,7 @@ Anim **loadAnims(SDL_Surface *screen, int *len) {
     anims[bulletAnim] = loadAnim("anims/bullet.ppm", 1, 9, 9, 1, screen, &blue);
     anims[smokeAnim] = loadAnim("anims/smoke.ppm", 10, 40, 40, 12, screen, &blue);
     anims[invAnim] = loadAnim("anims/inventory.ppm", 1, 188, 77, 1, screen, &blue);
+    anims[selectedCell] = loadAnim("anims/selected cell.ppm", 1, 34, 34, 1, screen, &blue);
     
     //dynamite 25 fps
     //explosion 20 fps
@@ -96,14 +95,14 @@ void freeAnims(Anim **anims, int len) {
     free(anims);
 }
 
-bool playAnim(Anim *anim, int x, int y, float angle, int *frame, bool flippedHoriz) {
+bool playAnim(Anim *anim, int x, int y, float angle, int *frame, clock_t *lastPlayed, bool flippedHoriz) {
     drawSubImage(anim->spriteSheet, anim->screen,
     x, y, 0, *frame * anim->height,
     anim->width, anim->height, &anim->background,
     flippedHoriz, angle);
 
-    if( (float) (clock() - anim->lastPlayed) / CLOCKS_PER_SEC >= (1.0 / anim->fps) ){
-        anim->lastPlayed = clock();
+    if( (float) (clock() - *lastPlayed) / CLOCKS_PER_SEC >= (1.0 / anim->fps) ){
+       *lastPlayed = clock();
        *frame += 1;
         if(*frame >= anim->frames) {
             *frame = 0;

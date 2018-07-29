@@ -32,7 +32,8 @@ typedef enum {
     pistolAnim,
     bulletAnim,
     smokeAnim,
-    invAnim
+    invAnim,
+    selectedCell
 } AnimName;
 
 /**
@@ -47,11 +48,11 @@ typedef struct {
     SDL_Surface *screen;
     int frames;
     Image *spriteSheet;
-    int currentFrame;
+    float a;
     float fps;
     bool flippedHoriz;
     bool repeat;
-    clock_t lastPlayed;
+    //clock_t lastPlayed;
     Color background;
     int width;
     int height;
@@ -89,6 +90,6 @@ void freeAnims(Anim **anims, int len);
 
     @return true if the animation has finished, false if not
 */
-bool playAnim(Anim *anim, int x, int y, float angle, int *frame, bool flippedHoriz);
+bool playAnim(Anim *anim, int x, int y, float angle, int *frame, clock_t *lastPlayed, bool flippedHoriz);
 
 #endif /* ANIM_H */

@@ -6,7 +6,7 @@
 #define HEALTH_BAR_THICKNESS 4
 #define HEALTH_BAR_SCALE .25
 
-Worm *createWorm(char *name, float x, float y, int health, Color *teamColor, Anim *anim) {
+Worm *createWorm(char *name, float x, float y, int health, Color *teamColor, Anim *anim, void *team) {
     Worm *worm = (Worm *) malloc(sizeof(Worm));
     worm->name = name;
     Box *frame = (Box *) malloc(sizeof(Box));
@@ -20,14 +20,21 @@ Worm *createWorm(char *name, float x, float y, int health, Color *teamColor, Ani
     worm->facingRight = randInt(0,2);
     worm->currentAnim = anim;
     worm->currentFrame = 0;
+    worm->team = team;
+    worm->lastPlayed = clock();
     return worm;
 }
 
 void drawWormHealthBar(Worm *worm, int thickness) {
     //Color green = {0, 255, 0};
     Color red = {255, 0, 0};
-    drawRect(worm->currentAnim->screen, worm->obj->x - (MAX_HEALTH / 2) * HEALTH_BAR_SCALE, worm->obj->y - worm->currentAnim->height, worm->health * HEALTH_BAR_SCALE, thickness, *worm->teamColor);
-    drawRect(worm->currentAnim->screen, worm->obj->x - (MAX_HEALTH / 2) * HEALTH_BAR_SCALE + worm->health * HEALTH_BAR_SCALE, worm->obj->y - worm->currentAnim->height, (MAX_HEALTH - worm->health) * HEALTH_BAR_SCALE, thickness, red);
+    int x, y, h, health;
+    x = worm->obj->x;
+    y = worm->obj->y;
+    h = worm->currentAnim->height;
+    health = worm->health;
+    drawRect(worm->currentAnim->screen, x - (MAX_HEALTH / 2) * HEALTH_BAR_SCALE, y - h, health * HEALTH_BAR_SCALE, thickness, *worm->teamColor);
+    drawRect(worm->currentAnim->screen, x - (MAX_HEALTH / 2) * HEALTH_BAR_SCALE + health * HEALTH_BAR_SCALE, y - h, (MAX_HEALTH - health) * HEALTH_BAR_SCALE, thickness, red);
 }
 
 void drawWorm(Worm *worm) {
@@ -35,7 +42,7 @@ void drawWorm(Worm *worm) {
     float x = worm->obj->x;
     float y = worm->obj->y;
     float rot = worm->obj->rotation;
-    playAnim(currentAnim, x, y, rot, &worm->currentFrame, worm->facingRight);
+    playAnim(currentAnim, x, y, rot, &worm->currentFrame, &worm->lastPlayed, worm->facingRight);
     drawWormHealthBar(worm, HEALTH_BAR_THICKNESS);
 }
 
@@ -72,8 +79,13 @@ void freeWorm(Worm *worm) {
 void clearWorm(Worm *worm, Level *level) {
     int s = 2;
     int s2 = 2;
+    int y, h, x, w;
+    y = worm->obj->y;
+    h = worm->currentAnim->height;
+    x = worm->obj->x;
+    w = worm->currentAnim->width;
     drawLevel(level, (worm->obj->x - worm->currentAnim->width * s) / 8,
-     (worm->obj->y - worm->currentAnim->height * s) / 8,
-    (worm->obj->x + worm->currentAnim->width * s2) ,
-    (worm->obj->y + worm->currentAnim->height * s2) );  
+     (y - h * s) / 8,
+    (x + w * s2) ,
+    (y + h * s2) );  
 }

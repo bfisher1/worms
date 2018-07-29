@@ -26,7 +26,10 @@
 #define INV_CELLS_WIDE 5
 #define NAME_HEIGHT 60
 #define TIMER_HEIGHT 90
+#define WEAPON_AMOUNT_MAX 5
+#define START_TEAM_IDX 2
 
+void setGameSelectedWeapon(Game *game, int weaponIdx);
 void dropCrates(Game *game, int crateNum);
 void switchTeam(Game *game);
 void switchPlayer(Game *game);
@@ -42,7 +45,7 @@ void drawInventory(Game *game, Team *team);
 
 void readKeys(SDL_Event *event, bool *left, bool *right, bool *up,
               bool *down, bool *space, bool *tab, bool *esc, bool *enter,
-              bool *backspace, bool *one, bool *two, bool *three);
+              bool *backspace, bool *one, bool *two, bool *three, bool *four, bool *five);
 
 Game *startGame(Level *level, Queue *teams, int turnLength, float gravity) {
     SDL_Surface *screen;
@@ -94,8 +97,11 @@ Game *startGame(Level *level, Queue *teams, int turnLength, float gravity) {
             switchAnim(team->worms[j], game->animBank[wormStill]);
         }
     }
-    game->currentTeam = dequeue(game->teams);
-    enqueue(game->teams, game->currentTeam);
+    for(int i = 0; i < START_TEAM_IDX; i++){
+        game->currentTeam = dequeue(game->teams);
+        enqueue(game->teams, game->currentTeam);
+    }
+
     game->player = team->worms[0];
     game->lastUpdate = clock();
     game->turnStart = clock();
@@ -130,7 +136,7 @@ void endGame(Game *game) {
 //NEED TO ADD WORM MAX DIST
 bool gameLoop(Game *game) {
     static SDL_Event event;
-    static bool left, right, up, down, space, tab, enter, backspace, esc, one, two, three, le, ri, to, bo, anyCol;
+    static bool left, right, up, down, space, tab, enter, backspace, esc, one, two, three, four, five, le, ri, to, bo, anyCol;
     static bool firing = false;
     static int mousex, mousey, teamNumber, wormNumber, stampNumber, itemNumber, weaponFrame;
     static int fps = 0;
@@ -142,7 +148,7 @@ bool gameLoop(Game *game) {
     static Team *team;
     static Weapon *currentWeapon;
     static clock_t lastSec = 0;
-    readKeys(&event, &left, &right, &up, &down, &space, &tab, &esc, &enter, &backspace, &one, &two, &three);
+    readKeys(&event, &left, &right, &up, &down, &space, &tab, &esc, &enter, &backspace, &one, &two, &three, &four, &five);
     if(esc) {
         return true;
     }
@@ -266,15 +272,23 @@ bool gameLoop(Game *game) {
         }
 
         if(one) {
-            game->currentTeam->selectedWeapon = 0;
+            setGameSelectedWeapon(game, 0);
         }
 
         if(two) {
-            game->currentTeam->selectedWeapon = 1;
+            setGameSelectedWeapon(game, 1);
         }
 
         if(three) {
-            game->currentTeam->selectedWeapon = 2;
+            setGameSelectedWeapon(game, 2);
+        }
+
+        if(four) {
+            setGameSelectedWeapon(game, 3);
+        }
+
+        if(five) {
+            setGameSelectedWeapon(game, 4);
         }
 
         //WORM AND ITEM COLLISIONS
@@ -312,8 +326,8 @@ bool gameLoop(Game *game) {
                 bool addBackItem2 = true;
                 Item *item2 = ((ItemSubclass *) subItem2)->item;
                 if(areObjectsColliding(item1->obj, item2->obj)) {
-                    int firstCol = item1->itemCollide(item1, item2, game);
-                    int secCol = item2->itemCollide(item2, item1, game);
+                    int firstCol = item1->itemCollide(subItem1, subItem2, game);
+                    int secCol = item2->itemCollide(subItem2, subItem1, game);
                     if(firstCol == ADD_BACK_NO_ITEMS) {
                         addBackItem1 = false;
                         addBackItem2 = false;
@@ -409,8 +423,18 @@ bool gameLoop(Game *game) {
             }
             else if(item->name == dynamiteItem ) {
                 Dynamite *dynamite = (Dynamite *) subItem;
-                if(readyToExplode(dynamite)) {
-                    int radius = 80;
+                if(dynamiteReadyToExplode(dynamite)) {
+                    int radius = dynamite->item->explosionRadius;
+                    createExplosion(game, item->obj->x, item->obj->y, radius);
+                    item->free(subItem);
+                } else {
+                    enqueue(game->items, subItem);
+                }
+            }
+            else if(item->name == mineItem ) {
+                Mine *mine = (Mine *) subItem;
+                if(mineReadyToExplode(mine)) {
+                    int radius = mine->item->explosionRadius;
                     cutCircleInLevel( ((Game *) game)->level, item->obj->x, item->obj->y, radius );
                     Stamp *explosionStamp = createStamp(game->animBank[explosion], 0, false, item->obj->x, item->obj->y);
                     enqueue(game->stamps, explosionStamp);
@@ -439,7 +463,7 @@ bool gameLoop(Game *game) {
 
         drawWeapon(currentWeapon->name,
                    game->player->obj->x, game->player->obj->y,
-                   &weaponFrame, (void *) game, space, game->player->facingRight, weaponDir);
+                   &weaponFrame, &currentWeapon->lastPlayed, (void *) game, space, game->player->facingRight, weaponDir);
 
         drawWormName(game, game->player);
         drawInventory(game, game->currentTeam);
@@ -485,14 +509,14 @@ bool gameLoop(Game *game) {
         }
         game->lastUpdate = clock(); 
 
-        printf("%d\n", isStill(game));
+        //printf("%d\n", isStill(game));
     }
     
     return false;
 
 }
 
-void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, bool *space, bool *tab, bool *esc, bool *enter, bool *backspace, bool *one, bool *two, bool *three) {
+void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, bool *space, bool *tab, bool *esc, bool *enter, bool *backspace, bool *one, bool *two, bool *three, bool *four, bool *five) {
     while(SDL_PollEvent(event)) {
         
         switch (event->type) 
@@ -536,6 +560,12 @@ void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, b
                     case SDLK_3:
                         *three = true;
                         break;
+                    case SDLK_4:
+                        *four = true;
+                        break;
+                    case SDLK_5:
+                        *five = true;
+                        break;
                     default:
                         break;
                 }
@@ -577,6 +607,12 @@ void readKeys(SDL_Event *event, bool *left, bool *right, bool *up, bool *down, b
                         break;
                     case SDLK_3:
                         *three = false;
+                        break;
+                    case SDLK_4:
+                        *four = false;
+                        break;
+                    case SDLK_5:
+                        *five = false;
                         break;
                     default:
                         break;
@@ -626,6 +662,7 @@ void drawInventory(Game *game, Team *team) {
     WeaponName name;
     InvWeapon *invWeapon;
     f = 0;
+    clock_t now = clock();
     char weaponNum[10];
     //width and height of inventory anim
     aw = game->animBank[invAnim]->width;
@@ -636,7 +673,9 @@ void drawInventory(Game *game, Team *team) {
     //width and height of each cell in the inventory
     w =  aw/ INV_CELLS_WIDE;
     h = ah / INV_CELLS_HIGH;
-    playAnim(game->animBank[invAnim], cx, cy, 0, &f, false);
+    playAnim(game->animBank[invAnim], cx, cy, 0, &f, &now, false);
+    f = 0;
+    playAnim( game->animBank[selectedCell], cx - aw/2 + w/2 + game->currentTeam->selectedWeapon * w + 2, cy - h/2, 0, &f, &now, false);
     weaponNumber = arrayListSize(team->weapons);
     for(int i = 0; i < weaponNumber; i++){
         //coordinates for the cell
@@ -646,7 +685,7 @@ void drawInventory(Game *game, Team *team) {
         invWeapon = (InvWeapon *) getArrayListElement(team->weapons, i);
         name = invWeapon->weapon.name;
         amount = invWeapon->amount;
-        drawWeapon(name, ix, iy, &f, game, false, false, 0);
+        drawWeapon(name, ix, iy, &f, &now, game, false, false, 0);
         sprintf(weaponNum, "%d", amount);
         writeText(game->font, weaponNum, ix, iy + h);
     }
@@ -695,7 +734,7 @@ bool isStill(Game *game) {
     Worm *worm;
     //WORM
     int teamNumber = queueSize(game->teams);
-    for(int i = 0; i < teamNumber && isStill; i++) {
+    for(int i = 0; i < teamNumber; i++) {
         team = dequeue(game->teams);
         enqueue(game->teams, team);
         wormNumber = team->teamNumber;
@@ -733,6 +772,8 @@ bool isStill(Game *game) {
 }
 
 void switchPlayer(Game *game) {
+    game->currentTeam->worms[game->currentTeam->playerIdx]->currentFrame = 0;
+    game->currentTeam->worms[game->currentTeam->playerIdx]->currentAnim = game->animBank[wormStill];
     game->currentTeam->playerIdx++;
     game->currentTeam->playerIdx %= game->currentTeam->teamNumber;
 }
@@ -747,4 +788,34 @@ void dropCrates(Game *game, int crateNum) {
         enqueue(game->items, createHealthCrate(randInt(0, game->level->width), 0, 60, 100, (void *) game));
         enqueue(game->items, createWeaponCrate(randInt(0, game->level->width), 0, 60, randWeapon((void *) game), randInt(0, 1), (void *) game));
     }
+}
+void giveWormWeapon(Game *game, Worm *worm, Weapon *weapon) {
+    Team *team = (Team *) worm->team;
+    InvWeapon *invWeapon;
+    int size = arrayListSize(team->weapons);
+    for(int i = 0; i < size; i++) {
+        invWeapon = ((InvWeapon *) getArrayListElement(team->weapons, i));
+        if(invWeapon->weapon.name == weapon->name) {
+            invWeapon->amount += randInt(1, WEAPON_AMOUNT_MAX);
+            freeWeapon(weapon);
+            return;
+        }
+    }
+    invWeapon = (InvWeapon *) malloc(sizeof(InvWeapon));
+    invWeapon->weapon = *weapon;
+    invWeapon->amount = randInt(1, WEAPON_AMOUNT_MAX);
+    addToArrayListEnd(team->weapons, invWeapon);
+}
+
+void setGameSelectedWeapon(Game *game, int weaponIdx) {
+    if(weaponIdx < arrayListSize(game->currentTeam->weapons)) {
+        game->currentTeam->selectedWeapon = weaponIdx;
+    }
+}
+
+void createExplosion(Game *game, int x, int y, int r) {
+    cutCircleInLevel(game->level, x, y, r);
+    Stamp *explosionStamp = createStamp(game->animBank[explosion], 0, false, x, y);
+    enqueue(game->stamps, explosionStamp);
+    explodeWorms(game->teams, game, x, y, r, MAX_JUMP_VELOCITY );
 }

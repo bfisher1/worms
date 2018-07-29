@@ -79,4 +79,9 @@ bool wormsHaveSettled(Game *game);
 void endGame(Game *game);
 
 bool gameLoop(Game *game);
+
+void giveWormWeapon(Game *game, Worm *worm, Weapon *weapon);
+
+void createExplosion(Game *game, int x, int y, int r);
+
 #endif /* GAME_H */

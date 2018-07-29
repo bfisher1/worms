@@ -17,6 +17,7 @@ Item *createItem(ItemName name, int x, int y, int explosionRadius,
                  bool (*wormCollide)(void *this, Worm *worm, void *game),
                  Anim *anim, void (*free)(void *self),
                  int (*itemCollide)(void *this, void *other, void *game)) {
+    static int id = 0;
     Item *item = (Item *) malloc(sizeof(Item));
     Box *frame = (Box *) malloc(sizeof(Box));
     frame->x = 0;
@@ -31,6 +32,8 @@ Item *createItem(ItemName name, int x, int y, int explosionRadius,
     item->animFrame = 0;
     item->free = free;
     item->name = name;
+    item->id = id++;
+    item->lastPlayed = clock();
     return item;
 }
 
@@ -39,16 +42,34 @@ void freeItem(Item *item) {
     free(item);
 }
 
+void triggerMine(Game *game, Mine *mine) {
+    if(!mine->triggered) {
+        mine->triggered = true;
+        mine->start = clock();
+        mine->item->anim = game->animBank[mineBlinkAnim];
+    }
+}
+
 //return whether to delete item after collision
 bool healthCrateWormCollide(void *this, Worm *worm, void *game) {
     healWorm(worm, HEALTH_CRATE_HEAL);
     return true;
 }
 bool weaponCrateWormCollide(void *this, Worm *worm, void *game) {
+    Weapon *weapon = randWeapon((Game *) game);
+    giveWormWeapon((Game *) game, worm, weapon);
     return true;
 }
 bool mineWormCollide(void *this, Worm *worm, void *game) {
-    return true;
+    //mine -> triggered = true;
+    //mine current anim = blinking
+    //velocity isn't 0
+    if( (int) ((Mine *) this)->item->obj->velocity ) {
+        return false;
+    }
+    //mine is still
+    triggerMine((Game *) game, (Mine *) this);
+    return false;
 }
 bool noCollideEvent(void *this, Worm *worm, void *game) {
     return false;
@@ -65,10 +86,10 @@ bool bulletCollideWorm(void *this, Worm *worm, void *game) {
 
 //item collisions
 int bulletCollideItem(void *this, void *other, void *game) {
-    Item *bullet = (Item *) this;
-    Item *item = (Item *) other;
-    cutCircleInLevel( ((Game *) game)->level, item->obj->x, item->obj->y, item->explosionRadius );
-    cutCircleInLevel( ((Game *) game)->level, bullet->obj->x, bullet->obj->y, bullet->explosionRadius );
+    Item *bullet = ((ItemSubclass *) this)->item;
+    Item *item = ((ItemSubclass *) other)->item;
+    createExplosion((Game *) game, item->obj->x, item->obj->y, item->explosionRadius);
+    createExplosion((Game *) game, bullet->obj->x, bullet->obj->y, bullet->explosionRadius);
     return ADD_BACK_NO_ITEMS;
 }
 
@@ -121,16 +142,26 @@ void freeWeaponCrate(void *weaponCrate) {
 
 
 void drawItem(Item *item) {
-    playAnim(item->anim, item->obj->x, item->obj->y, 0, &item->animFrame, false);
+    if(item->name == mineItem){
+        //printf("%d %d\n", &item->animFrame, item->animFrame);
+    }
+    if(playAnim(item->anim, item->obj->x, item->obj->y, 0, &item->animFrame, &item->lastPlayed, false)){
+        //item->animFrame = 0;
+    }
 }
 
 void clearItem(Item *item, Level *level) {
     int s = 2;
     int s2 = 2;
-    drawLevel(level, (item->obj->x - item->anim->width * s) / 8,
-     (item->obj->y - item->anim->height * s) / 8,
-    (item->obj->x + item->anim->width * s2) ,
-    (item->obj->y + item->anim->height * s2) );  
+    int x, y, w, h;
+    x = item->obj->x;
+    y = item->obj->y;
+    w = item->anim->width;
+    h = item->anim->height;
+    drawLevel(level, (x - w * s) / 8,
+     (y - h * s) / 8,
+    (x + w * s2) ,
+    (y + h * s2) );  
 }
 
 void freeDynamite(void *dynamite) {
@@ -147,10 +178,17 @@ Dynamite *createDynamite(int x, int y, int explosionRadius, float delay, void *g
     return dynamite;
 }
 
-bool readyToExplode(void *explosive) {
+bool dynamiteReadyToExplode(void *explosive) {
     Dynamite *dynamite = (Dynamite *) explosive;
     return ( (float) (clock() - dynamite->start) ) / CLOCKS_PER_SEC >= dynamite->delay;
 }
+
+bool mineReadyToExplode(Mine *explosive) {
+    Mine *mine = (Mine *) explosive;
+    return mine->triggered && ( (float) (clock() - mine->start) ) / CLOCKS_PER_SEC >= mine->delay;
+}
+
+
 
 void freeBullet(void *bullet) {
     Bullet *b = (Bullet *) bullet;

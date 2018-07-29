@@ -8,6 +8,7 @@
 #define WEAPON_H
 #include <stdbool.h>
 #include <stdarg.h>
+#include <time.h>
 #define WEAPON_NUMBER 6 
 #include "List/ArrayList.h"
 
@@ -33,6 +34,7 @@ typedef struct WeaponTag {
     bool rangedAttack;
     void (*drawInHand)(struct WeaponTag *weapon);
     void (*activateWeapon)(void *game, int x, int y, float velocity, float orientation);
+    clock_t lastPlayed;
 } Weapon;
 
 typedef struct {
@@ -44,7 +46,7 @@ Weapon *createDynamiteWeapon();
 Weapon *createMineWeapon();
 Weapon *createPistolWeapon();
 
-void drawWeapon(WeaponName name, int x, int y, int *frame, void *game, bool firing, bool flippedHoriz, float weaponDir);
+void drawWeapon(WeaponName name, int x, int y, int *frame, clock_t *lastPlayed, void *game, bool firing, bool flippedHoriz, float weaponDir);
 
 void freeWeapon(Weapon *weapon);
 

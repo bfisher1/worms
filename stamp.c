@@ -9,12 +9,13 @@ Stamp *createStamp(Anim *anim, float duration, bool repeat, int x, int y) {
     stamp->repeat = repeat;
     stamp->hasFinished = false;
     stamp->start = clock();
+    stamp->lastPlayed = clock();
     stamp->x = x;
     stamp->y = y;
     return stamp;
 }
 void drawStamp(Stamp *stamp, int x, int y) {
-    if(playAnim(stamp->anim, x, y, 0, &stamp->frame, false)){
+    if(playAnim(stamp->anim, x, y, 0, &stamp->frame, &stamp->lastPlayed, false)) {
         stamp->hasFinished = true;
     }
 }

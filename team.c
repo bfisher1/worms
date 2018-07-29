@@ -6,7 +6,7 @@ Team *createTeam(char *name, char **names, int teamNumber, Color color, ArrayLis
     team->color = color;
     Worm **worms = (Worm **) malloc(sizeof(Worm *) * teamNumber);
     for(int i = 0; i < teamNumber; i++) {
-        worms[i] = createWorm(names[i], randInt(0, level->width), 0, 100, &team->color, NULL);
+        worms[i] = createWorm(names[i], randInt(0, level->width), 0, 100, &team->color, NULL, team);
     }
     team->worms = worms;
     team->name = name;

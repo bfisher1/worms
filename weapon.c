@@ -20,7 +20,9 @@
 #define BULLET_EXPLOSION_RADIUS 20
 #define BULLET_START_DIST 40
 #define DYNAMITE_EXTRA_HEIGHT 15
-
+#define MINE_DELAY 3.0
+#define MINE_EXPLOSION_RADIUS 80
+#define MINE_EXTRA_HEIGHT 15
 /**
 typedef struct WeaponTag {
     WeaponName name;
@@ -77,6 +79,7 @@ void fillWeaponFields(Weapon *weapon, WeaponName name,
     weapon->fireAtRelease = fireAtRelease;
     weapon->drawInHand = drawInHand;
     weapon->activateWeapon = activateWeapon;
+    weapon->lastPlayed = clock();
 }
 
 Weapon *createDynamiteWeapon(Game *game) {
@@ -99,36 +102,36 @@ void freeWeapon(Weapon *weapon) {
     free(weapon);
 }
 
-void drawWeapon(WeaponName name, int x, int y, int *frame, void *game, bool firing, bool flippedHoriz, float weaponDir) {
+void drawWeapon(WeaponName name, int x, int y, int *frame, clock_t *lastPlayed, void *game, bool firing, bool flippedHoriz, float weaponDir) {
     Game *g = (Game *) game;
     
     switch(name) {
         case grenade:
             break;
         case mine:
-            if(playAnim(g->animBank[mineOffAnim], x, y, weaponDir, frame, flippedHoriz)){
+            if(playAnim(g->animBank[mineOffAnim], x, y, weaponDir, frame, lastPlayed, flippedHoriz)){
                 *frame = 0;
             }
             break;
         case dynamite:
-            if(playAnim(g->animBank[dynamiteAnim], x, y, weaponDir, frame, flippedHoriz)) {
+            if(playAnim(g->animBank[dynamiteAnim], x, y, weaponDir, frame, lastPlayed, flippedHoriz)) {
                 *frame = 0;
             }
             break;
         case parachute:
             break;
         case pistol:
-            if(playAnim(g->animBank[pistolAnim], x, y, weaponDir, frame, flippedHoriz)){
+            if(playAnim(g->animBank[pistolAnim], x, y, weaponDir, frame, lastPlayed, flippedHoriz)){
                 *frame = 0;
             }
             break;
         case blowTorch:
             if(!firing){
-                if(playAnim(g->animBank[blowTorchStill], x, y, weaponDir, frame, flippedHoriz)){
+                if(playAnim(g->animBank[blowTorchStill], x, y, weaponDir, frame, lastPlayed, flippedHoriz)){
                     *frame = 0;
                 }
             } else {
-                if(playAnim(g->animBank[blowTorchFire], x, y, weaponDir, frame, flippedHoriz)){
+                if(playAnim(g->animBank[blowTorchFire], x, y, weaponDir, frame, lastPlayed, flippedHoriz)){
                     *frame = 0;
                 }
             }
@@ -142,11 +145,16 @@ void fireWeapon(WeaponName name, void *game, int x, int y, float direction, floa
     int firex, firey;
     float dif;
     Dynamite *d;
+    Mine *m;
     Bullet *b;
     switch(name) {
         case grenade:
             break;
         case mine:
+            m = createMine(x, y - MINE_EXTRA_HEIGHT, MINE_EXPLOSION_RADIUS, clock(), MINE_DELAY, (Game *) game);
+            m->item->obj->velocity = force;
+            m->item->obj->direction = direction;
+            enqueue(g->items, m );
             break;
         case dynamite:
             d = createDynamite(x, y - DYNAMITE_EXTRA_HEIGHT, DYNAMITE_EXPLOSION_RADIUS, DYNAMITE_DELAY, ((Game *) game) );
@@ -182,7 +190,8 @@ void drawCrossHair(void *game, int cx, int cy, float angle, float force) {
     firex = cx + CROSS_HAIR_DIST_SCALE * force * cos(angle);
     firey = cy + CROSS_HAIR_DIST_SCALE * force * sin(angle);
     zero = 0;
-    playAnim(g->animBank[crossHair], firex, firey, 0, &zero, false);
+    clock_t now = clock();
+    playAnim(g->animBank[crossHair], firex, firey, 0, &zero, &now, false);
 }
 void clearCrossHair(void *game, int cx, int cy, float angle, float force) {
     Game *g = (Game *) game;
@@ -256,7 +265,7 @@ Weapon *randWeapon(void *game) {
     Weapon *weapon = NULL;
     switch(weaponName) {
         default:
-            createDynamiteWeapon((Game *) game);
+            weapon = createDynamiteWeapon((Game *) game);
             break;
     }
     return weapon;

@@ -28,4 +28,6 @@ void *getArrayListElement(ArrayList *list, int idx);
 
 int arrayListSize(ArrayList *list);
 
+bool arrayListContains(ArrayList *list, void *element);
+
 #endif /* ARRAY_LIST */

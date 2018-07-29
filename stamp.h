@@ -14,6 +14,7 @@ typedef struct {
 	clock_t start;
 	int x;
 	int y;
+	clock_t lastPlayed;
 } Stamp;
 
 Stamp *createStamp(Anim *anim, float duration, bool repeat, int x, int y);

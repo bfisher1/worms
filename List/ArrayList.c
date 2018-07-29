@@ -83,6 +83,15 @@ int arrayListSize(ArrayList *list) {
     return list->size;
 }
 
+bool arrayListContains(ArrayList *list, void *element) {
+    for(int i = 0; i < list->size; i++) {
+        if(list->elements[i] == element) {
+            return true;
+        }
+    }
+    return false;
+}
+
 #ifdef TEST_ARRAY_LIST
 #include <assert.h>
 int main(){

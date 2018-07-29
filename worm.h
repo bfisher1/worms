@@ -13,6 +13,7 @@
 #include "physObj.h"
 #include "anim.h"
 #include "graphics.h"
+#include <time.h>
 #define MAX_HEALTH 100
 /**
     Structure for a worm.
@@ -25,6 +26,8 @@ typedef struct {
     char *name;
     bool facingRight;
     int currentFrame;
+    void *team;
+    clock_t lastPlayed;
 } Worm;
 
 /**
@@ -39,7 +42,7 @@ typedef struct {
 
     @return the created worm
 */
-Worm *createWorm(char *name, float x, float y, int health, Color *teamColor, Anim *anim);
+Worm *createWorm(char *name, float x, float y, int health, Color *teamColor, Anim *anim, void *team);
 
 /**
     Draws the worm according to its current animation.

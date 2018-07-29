@@ -21,7 +21,7 @@ Font *loadFont(char *fileName, SDL_Surface *screen, Color background, Color text
     return font;
 }
 void freeFont(Font *font) {
-    free(font->font);
+    freeImage(font->font);
     free(font);
 }
 

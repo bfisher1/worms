@@ -18,15 +18,15 @@ anim.o : anim.c anim.h graphics.h
 
 game.o : game.c game.h item.h worm.h weapon.o ./Queue/queue.h util.h text.h List/ArrayList.h
 
-item.o : item.c item.h weapon.h util.h
+item.o : item.c item.h weapon.h util.h anim.h
 
 physObj.o : physObj.c physObj.h level.h util.h
 
-worm.o : worm.c worm.h
+worm.o : worm.c worm.h anim.h
 
 team.o : team.c team.h worm.h weapon.h util.h List/ArrayList.h
 
-weapon.o : weapon.c weapon.h physObj.h level.h game.h ./Queue/queue.h item.h util.h List/ArrayList.h
+weapon.o : weapon.c weapon.h physObj.h level.h game.h ./Queue/queue.h item.h util.h List/ArrayList.h anim.h
 
 stamp.o : stamp.c stamp.h anim.h level.h
 

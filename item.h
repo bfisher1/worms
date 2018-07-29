@@ -13,6 +13,7 @@
 #include "anim.h"
 #include "level.h"
 #include <stdbool.h>
+#include <time.h>
 #define ADD_BACK_NO_ITEMS 0
 #define ADD_BACK_FIRST_ITEM 1
 #define ADD_BACK_SECOND_ITEM 2
@@ -41,6 +42,8 @@ typedef struct ItemTag {
     void (*free)(void *self);
     void (*act)(void *self);
     ItemName name;
+    int id;
+    clock_t lastPlayed;
 } Item;
 
 /**
@@ -153,7 +156,9 @@ Dynamite *createDynamite(int x, int y, int explosionRadius, float delay, void *g
 
 void freeDynamite(void *dynamite);
 
-bool readyToExplode(void *explosive);
+bool dynamiteReadyToExplode(void *dynamite);
+
+bool mineReadyToExplode(Mine *mine);
 
 bool bulletOutOfRange(Bullet *bullet);
 

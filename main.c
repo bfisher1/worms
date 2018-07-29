@@ -32,8 +32,8 @@
 #define MAX_X_VELOCITY 5.0
 #define JUMP 8.0
 #define MAX_JUMP_VELOCITY 25
-#define INV_SIZE 3
-#define TURN_LENGTH 15
+#define INV_SIZE 4
+#define TURN_LENGTH 95
 
 //add suddent death and water
 
@@ -71,17 +71,17 @@ int main(int argc, char *argv[])
     */
     Color green = {0, 255, 0};
     Color blue = {0, 0, 255};
-    Level *level = loadLevel("levels/dad_level_foreground.ppm", "levels/driveway_background.ppm", "levels/dad_level_level.ppm", NULL);
-    //loadLevel("levels/dad_level_foreground.ppm", "levels/driveway_background.ppm", "levels/dad_level_level.ppm", NULL);
-    //loadLevel("levels/ben_level_foreground.ppm", "levels/driveway_background.ppm", "levels/ben_level_level.ppm", NULL);
+    //Level *level = loadLevel("levels/super tiny foreground.ppm", "levels/super tiny background.ppm", "levels/super tiny level.ppm", NULL);
+    //Level *level = loadLevel("levels/dad_level_foreground.ppm", "levels/driveway_background.ppm", "levels/dad_level_level.ppm", NULL);
+    Level *level = loadLevel("levels/ben_level_foreground.ppm", "levels/driveway_background.ppm", "levels/ben_level_level.ppm", NULL);
     //Worm *worm; // = createWorm("Springy", 202, 111, 100, &green, animBank[wormMove]);
     
     char *teamOneNames[] = {"Firefox", "BST", "Hidden", "Blender", "PuTTY", "Huffman", "Seg fault"};
-    ArrayList *teamOneWeapons = makeWeapons(INV_SIZE, parachute, 1, mine, 0, grenade, 3);
+    ArrayList *teamOneWeapons = makeWeapons(INV_SIZE, parachute, 1, mine, 0, grenade, 3, pistol, 2);
     Team *teamOne = createTeam("Annihilators", teamOneNames, 7, green, teamOneWeapons, level);
 
     char *teamTwoNames[] = {"FSM", "C++", "Python", "Exception", "HTML", "Hash table", "Assembly"};
-    ArrayList *teamTwoWeapons = makeWeapons(INV_SIZE, blowTorch, 20, dynamite, 8, pistol, 6);
+    ArrayList *teamTwoWeapons = makeWeapons(INV_SIZE, blowTorch, 20, dynamite, 8, pistol, 6, mine, 4);
     Team *teamTwo = createTeam("OverClockers", teamTwoNames, 7, blue, teamTwoWeapons, level);
 
     //Team *teams[]  = {teamOne, teamTwo};
@@ -109,10 +109,11 @@ int main(int argc, char *argv[])
     Game *game = startGame(level, teams, TURN_LENGTH, GRAVITY);
     level->screen = game->screen;
     drawLevel(game->level, 0, 0, WIDTH, HEIGHT);
+    /*
     enqueue(game->items, createHealthCrate(426, 376, 60, 100, (void *) game));
     enqueue(game->items, createHealthCrate(466, 376, 60, 100, (void *) game));
     enqueue(game->items, createHealthCrate(516, 376, 60, 100, (void *) game));
-    
+    */
     //Image *life = loadPPM("levels/level1.ppm");
     
     //Level *level = loadLevel("levels/tiny_foreground.ppm", "levels/tiny_background.ppm", "levels/tiny level.ppm", screen);
